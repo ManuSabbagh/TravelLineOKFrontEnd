@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WiFi Central Victoria - Portal de Acceso</title>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+      }
+
+      .container {
+        max-width: 450px;
+        width: 90%;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border-radius: 25px;
+        padding: 40px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        text-align: center;
+      }
+
+      .version-badge {
+        background: linear-gradient(45deg, #ff6b6b, #feca57);
+        color: white;
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+        display: inline-block;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .logo {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        animation: bounce 2s infinite;
+      }
+
+      @keyframes bounce {
+        0%,
+        20%,
+        50%,
+        80%,
+        100% {
+          transform: translateY(0);
+        }
+        40% {
+          transform: translateY(-10px);
+        }
+        60% {
+          transform: translateY(-5px);
+        }
+      }
+
+      h1 {
+        font-size: 2.2rem;
+        margin-bottom: 10px;
+        background: linear-gradient(45deg, #ff6b6b, #feca57, #48dbfb);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 30px;
+      }
+
+      .no-cash-banner {
+        background: linear-gradient(45deg, #ff4757, #ff3838);
+        padding: 15px;
+        border-radius: 15px;
+        margin-bottom: 25px;
+        border: 2px solid #ff6b6b;
+      }
+
+      .no-cash-banner h3 {
+        font-size: 1.3rem;
+        margin-bottom: 8px;
+      }
+
+      .payment-methods {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin: 25px 0;
+      }
+
+      .payment-option {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .payment-option:hover {
+        transform: translateY(-5px);
+        border-color: #48dbfb;
+        box-shadow: 0 15px 30px rgba(72, 219, 251, 0.3);
+      }
+
+      .payment-option.selected {
+        border-color: #48dbfb;
+        background: rgba(72, 219, 251, 0.2);
+      }
+
+      .payment-option.free-plan {
+        border-color: #2ed573;
+        background: rgba(46, 213, 115, 0.1);
+      }
+
+      .payment-option.free-plan .payment-price {
+        color: #2ed573;
+        font-size: 1.2rem;
+      }
+
+      .payment-option.premium {
+        border-color: #feca57;
+        background: rgba(254, 202, 87, 0.1);
+      }
+
+      .payment-icon {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+      }
+
+      .payment-name {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .payment-price {
+        font-size: 1.5rem;
+        color: #feca57;
+        font-weight: bold;
+      }
+
+      .user-form {
+        margin: 25px 0;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+        text-align: left;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #feca57;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #48dbfb;
+        box-shadow: 0 0 20px rgba(72, 219, 251, 0.3);
+      }
+
+      .form-group input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .pay-button {
+        width: 100%;
+        padding: 18px;
+        background: linear-gradient(45deg, #48dbfb, #0abde3);
+        border: none;
+        border-radius: 15px;
+        color: white;
+        font-size: 1.2rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 20px;
+      }
+
+      .pay-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(72, 219, 251, 0.4);
+      }
+
+      .pay-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .qr-container {
+        display: none;
+        margin: 25px 0;
+        padding: 25px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 15px;
+        color: #333;
+      }
+
+      .qr-code {
+        width: 200px;
+        height: 200px;
+        background: white;
+        margin: 20px auto;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        border: 3px solid #48dbfb;
+      }
+
+      .timer {
+        font-size: 1.5rem;
+        color: #ff4757;
+        font-weight: bold;
+        margin-top: 15px;
+      }
+
+      .success-message {
+        display: none;
+        background: linear-gradient(45deg, #2ed573, #1e90ff);
+        padding: 25px;
+        border-radius: 15px;
+        margin: 20px 0;
+      }
+
+      .success-message h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+      }
+
+      .wifi-credentials {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 15px;
+      }
+
+      .wifi-credentials strong {
+        color: #feca57;
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 20px;
+      }
+
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid rgba(255, 255, 255, 0.3);
+        border-top: 5px solid #48dbfb;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .digital-wallets {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin: 20px 0;
+      }
+
+      .wallet-option {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+        padding: 15px 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+      }
+
+      .wallet-option:hover {
+        border-color: #48dbfb;
+        transform: scale(1.05);
+      }
+
+      .wallet-option.selected {
+        border-color: #48dbfb;
+        background: rgba(72, 219, 251, 0.2);
+      }
+
+      .wallet-icon {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+      }
+
+      .wallet-name {
+        font-size: 0.8rem;
+        font-weight: bold;
+      }
+
+      .security-badges {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+      }
+
+      .security-badge {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          padding: 25px;
+          margin: 20px;
+        }
+
+        .payment-methods {
+          grid-template-columns: 1fr;
+        }
+
+        .digital-wallets {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">🚌</div>
+      <h1>TravelLineOK WiFi</h1>
+      <p class="subtitle">Conectate con pagos 100% digitales</p>
+
+      <div class="no-cash-banner">
+        <h3>🚫 SIN EFECTIVO</h3>
+        <p>Solo Mercado Pago</p>
+      </div>
+
+      <!-- Formulario de Usuario -->
+      <div class="user-form" id="userForm">
+        <div class="form-group">
+          <label for="userName">👤 Nombre completo</label>
+          <input
+            type="text"
+            id="userName"
+            placeholder="Ingresa tu nombre"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="userEmail">📧 Email</label>
+          <input
+            type="email"
+            id="userEmail"
+            placeholder="tu@email.com"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="userPhone">📱 Teléfono</label>
+          <input
+            type="tel"
+            id="userPhone"
+            placeholder="+54 9 11 1234-5678"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- Opciones de Pago -->
+      <div class="payment-methods">
+        <div
+          class="payment-option free-plan"
+          data-plan="1hora"
+          onclick="selectPlan('1hora', 0)"
+        >
+          <div class="payment-icon">🎁</div>
+          <div class="payment-name">1 Hora</div>
+          <div class="payment-price">GRATIS</div>
+        </div>
+
+        <div
+          class="payment-option"
+          data-plan="12horas"
+          onclick="selectPlan('12horas', 3000)"
+        >
+          <div class="payment-icon">🕐</div>
+          <div class="payment-name">12 Horas</div>
+          <div class="payment-price">$3.000</div>
+        </div>
+
+        <div
+          class="payment-option"
+          data-plan="24horas"
+          onclick="selectPlan('24horas', 5000)"
+        >
+          <div class="payment-icon">🌅</div>
+          <div class="payment-name">24 Horas</div>
+          <div class="payment-price">$5.000</div>
+        </div>
+
+        <div
+          class="payment-option"
+          data-plan="tiempo"
+          onclick="showTimeRemaining()"
+        >
+          <div class="payment-icon">⏰</div>
+          <div class="payment-name">Tiempo Restante</div>
+          <div class="payment-price" id="timeRemaining">--:--:--</div>
+        </div>
+      </div>
+
+      <!--
+         Billeteras Digitales --
+        <div class="digital-wallets">
+            <div class="wallet-option" data-wallet="mercadopago" onclick="selectWallet('mercadopago')">
+                <div class="wallet-icon">💙</div>
+                <div class="wallet-name">MercadoPago</div>
+            </div>
+
+            
+            
+            Comentado hasta tener las demas billeteras
+            ----------------------------------------------------------
+            <div class="wallet-option" data-wallet="uala" onclick="selectWallet('uala')">
+                <div class="wallet-icon">🔵</div>
+                <div class="wallet-name">Ualá</div>
+            </div>
+            
+            <div class="wallet-option" data-wallet="brubank" onclick="selectWallet('brubank')">
+                <div class="wallet-icon">🟣</div>
+                <div class="wallet-name">Brubank</div>
+            </div>
+            
+            <div class="wallet-option" data-wallet="tarjeta" onclick="selectWallet('tarjeta')">
+                <div class="wallet-icon">💳</div>
+                <div class="wallet-name">Tarjeta</div>
+            </div>
+        </div> -->
+
+      <!-- Badges de Seguridad -->
+      <div class="security-badges">
+        <div class="security-badge">🔒 SSL Seguro</div>
+        <div class="security-badge">🛡️ 3D Secure</div>
+        <div class="security-badge">⚡ Instantáneo</div>
+      </div>
+
+      <button class="pay-button" onclick="processPayment()" id="payButton">
+        💳 Selecciona un plan para continuar
+      </button>
+
+      <!-- Loading -->
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Procesando pago seguro...</p>
+      </div>
+
+      <!-- QR Container -->
+      <div class="qr-container" id="qrContainer">
+        <h3>📱 Escanea el código QR</h3>
+        <div class="qr-code" id="qrCode">📱</div>
+        <p>Código dinámico - Se actualiza cada 30 segundos</p>
+        <div class="timer" id="timer">30</div>
+      </div>
+
+      <!-- Success Message -->
+      <div class="success-message" id="successMessage">
+        <h3>🎉 ¡Pago Exitoso!</h3>
+        <p>Tu conexión WiFi está lista</p>
+        <div class="wifi-credentials">
+          <p><strong>Red:</strong> WiFi_Central_Victoria</p>
+          <p>
+            <strong>Contraseña:</strong>
+            <span id="wifiPassword">Premium2024!</span>
+          </p>
+          <p><strong>Velocidad:</strong> <span id="wifiSpeed">50 Mbps</span></p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Variables globales
+      let selectedPlan = null;
+      let selectedWallet = null;
+      let selectedPrice = 0;
+      let paymentTimer = null;
+      let qrTimer = null;
+      let qrCountdown = 30;
+
+      function getQueryParam(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+      }
+      const MAC_FROM_URL = getQueryParam("mac") || "AA:BB:CC:DD:EE:FF";
+      const BUS_ID_FROM_URL = getQueryParam("bus_id") || "BUS-001";
+
+      // --- CONFIG DEL API (ajústalo para pruebas locales si querés) ---
+      // Si la página se sirve en https://travellineok.com deja vacío:
+      const API_BASE = "https://travellineok.com";
+      // Para probar el HTML localmente contra el VPS, poné:
+      // const API_BASE = 'https://travellineok.com';
+
+      // --- Parámetros que idealmente te pasa el router en la URL ---
+      const urlParams = new URLSearchParams(location.search);
+      const mac = (urlParams.get("mac") || "AA:BB:CC:DD:EE:FF").toUpperCase();
+      const busId = urlParams.get("bus_id") || "BUS-001";
+
+      // --- Mapeo nombres del front -> planes del backend ---
+      function mapPlanToBackend(plan) {
+        if (plan === "1hora") return "FREE_1H";
+        if (plan === "12horas") return "PAID_12H";
+        if (plan === "24horas") return "PAID_24H";
+        return null;
+      }
+      // Configuración MercadoPago V9
+      const mp = new MercadoPago("APP_USR-12345678-123456-123456789-12345678", {
+        locale: "es-AR",
+      });
+
+      // Seleccionar plan
+      function selectPlan(plan, price) {
+        // Remover selección anterior
+        document.querySelectorAll(".payment-option").forEach((option) => {
+          option.classList.remove("selected");
+        });
+
+        // Marcar el plan seleccionado
+        document
+          .querySelector(`[data-plan="${plan}"]`)
+          .classList.add("selected");
+
+        // Guardar selección global
+        selectedPlan = plan;
+        selectedPrice = price;
+
+        // Ocultar cosas que ya no usamos (wallets, badges extra)
+        const walletsContainer = document.querySelector(".digital-wallets");
+        const securityBadges = document.querySelector(".security-badges");
+
+        if (walletsContainer) walletsContainer.style.display = "none";
+        if (securityBadges) securityBadges.style.display = "none";
+
+        // Actualizar el estado del botón según el plan
+        updatePayButton();
+      }
+
+      /*
+      // Seleccionar billetera
+      function selectWallet(wallet) {
+        // Remover selección anterior
+        document.querySelectorAll(".wallet-option").forEach((option) => {
+          option.classList.remove("selected");
+        });
+
+        // Seleccionar nueva billetera
+        document
+          .querySelector(`[data-wallet="${wallet}"]`)
+          .classList.add("selected");
+        selectedWallet = wallet;
+
+        updatePayButton();
+      }
+      */
+
+      // Mapea los nombres visibles del UI a lo que espera tu backend
+      function mapPlanToApi(planUi) {
+        if (planUi === "1hora") return "FREE_1H";
+        if (planUi === "12horas") return "PAID_12H";
+        if (planUi === "24horas") return "PAID_24H";
+        throw new Error("Plan inválido");
+      }
+
+      // Actualizar botón de pago
+      function updatePayButton() {
+        const payButton = document.getElementById("payButton");
+        const userName = document.getElementById("userName").value.trim();
+        const userEmail = document.getElementById("userEmail").value.trim();
+        const userPhone = document.getElementById("userPhone").value.trim();
+
+        if (!selectedPlan) {
+          payButton.disabled = true;
+          payButton.textContent = "💳 Selecciona un plan para continuar";
+          return;
+        }
+
+        if (!userName || !userEmail || !userPhone) {
+          payButton.disabled = true;
+          payButton.textContent = "💳 Completa tus datos";
+          return;
+        }
+
+        // Sin billetera: si es gratis, botón de “Gratis”; si es pago, muestra monto con MP
+        if (selectedPlan === "1hora") {
+          payButton.disabled = false;
+          payButton.textContent = "🎁 Obtener 1 Hora GRATIS";
+        }
+        if (selectedPlan === "12horas") {
+          payButton.disabled = false;
+          payButton.textContent = `💳 Pagar $${selectedPrice.toLocaleString()} con MercadoPago`;
+        }
+        if (selectedPlan === "24horas") {
+          payButton.disabled = false;
+          payButton.textContent = `💳 Pagar $${selectedPrice.toLocaleString()} con MercadoPago`;
+        }
+      }
+
+      /*
+      // Obtener nombre de billetera
+      function getWalletName(wallet) {
+        const names = {
+          mercadopago: "MercadoPago",
+          uala: "Ualá",
+          brubank: "Brubank",
+          tarjeta: "Tarjeta",
+        };
+        return names[wallet] || "Método Digital";
+      }
+      */
+
+      // Procesar pago
+      async function processPayment() {
+        const userName = document.getElementById("userName").value.trim();
+        const userEmail = document.getElementById("userEmail").value.trim();
+        const userPhone = document.getElementById("userPhone").value.trim();
+
+        if (!selectedPlan) {
+          alert("Selecciona un plan.");
+          return;
+        }
+        if (!userName || !userEmail || !userPhone) {
+          alert("Completá nombre, email y teléfono.");
+          return;
+        }
+
+        // Si capturás la MAC del querystring, podés leerla aquí; por ahora fija:
+        const mac = "AA:BB:CC:DD:EE:FF";
+        const busId = "BUS-001";
+
+        const planApi = mapPlanToApi(selectedPlan);
+
+        // UI: loading ON
+        document.getElementById("loading").style.display = "block";
+        document.getElementById("payButton").disabled = true;
+
+        try {
+          const resp = await fetch("https://travellineok.com/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              plan: planApi,
+              mac: MAC_FROM_URL,
+              bus_id: BUS_ID_FROM_URL,
+            }),
+          });
+
+          if (!resp.ok) {
+            const txt = await resp.text();
+            throw new Error(`Error backend (${resp.status}): ${txt}`);
+          }
+
+          const data = await resp.json();
+          // data: { order_id, status, init_point }
+
+          if (planApi === "FREE_1H") {
+            // Gratis: el backend ya deja approved y (cuando tengas el Mikrotik online) habilita acceso.
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("successMessage").style.display = "block";
+            // Configuración “demo” de credenciales/velocidad si querés mantener el UI
+            document.getElementById("wifiPassword").textContent =
+              "Free1H_2024!";
+            document.getElementById("wifiSpeed").textContent = "5 Mbps";
+            return;
+          }
+
+          // Pago: redirigir a Mercado Pago
+          const initPoint = data.init_point;
+          if (!initPoint) {
+            throw new Error("No llegó init_point desde el backend.");
+          }
+          window.location.href = initPoint;
+        } catch (err) {
+          console.error(err);
+          alert("No se pudo iniciar el proceso. " + (err?.message || err));
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("payButton").disabled = false;
+        }
+      }
+
+      // Crear preferencia de pago
+      async function createPaymentPreference() {
+        // Simulación de API call a MercadoPago V9
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              id: "PREF_" + Date.now(),
+              qr_code: generateQRCode(),
+              payment_url:
+                "https://mercadopago.com/checkout/v1/redirect?pref_id=PREF_" +
+                Date.now(),
+            });
+          }, 2000);
+        });
+      }
+
+      // Generar código QR dinámico
+      function generateQRCode() {
+        const codes = ["📱💙", "💳🔵", "📲💜", "💰🟢", "🔒💛"];
+        return codes[Math.floor(Math.random() * codes.length)];
+      }
+
+      // Mostrar pago con QR
+      function showQRPayment(preference) {
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("qrContainer").style.display = "block";
+
+        // Actualizar QR
+        updateQRCode();
+
+        // Iniciar timer de QR dinámico
+        startQRTimer();
+
+        // Simular verificación de pago
+        setTimeout(() => {
+          completePayment();
+        }, 8000);
+      }
+
+      // Mostrar formulario de tarjeta
+      function showCardForm(preference) {
+        // Para este demo, simulamos pago exitoso
+        setTimeout(() => {
+          completePayment();
+        }, 3000);
+      }
+
+      // Actualizar código QR
+      function updateQRCode() {
+        const qrCode = document.getElementById("qrCode");
+        qrCode.textContent = generateQRCode();
+      }
+
+      // Iniciar timer de QR
+      function startQRTimer() {
+        qrCountdown = 30;
+        qrTimer = setInterval(() => {
+          qrCountdown--;
+          document.getElementById("timer").textContent = qrCountdown;
+
+          if (qrCountdown <= 0) {
+            updateQRCode();
+            qrCountdown = 30;
+          }
+        }, 1000);
+      }
+
+      // Completar pago
+      function completePayment() {
+        // Limpiar timers
+        if (qrTimer) clearInterval(qrTimer);
+
+        // Ocultar elementos de pago
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("qrContainer").style.display = "none";
+
+        // Mostrar mensaje de éxito
+        document.getElementById("successMessage").style.display = "block";
+
+        // Configurar credenciales WiFi según el plan
+        const wifiConfigs = {
+          "1hora": { password: "Free1H_2024!", speed: "5 Mbps" },
+          "12horas": { password: "Wifi12H_2024!", speed: "25 Mbps" },
+          "24horas": { password: "Wifi24H_2024!", speed: "35 Mbps" },
+        };
+
+        const config = wifiConfigs[selectedPlan];
+        document.getElementById("wifiPassword").textContent = config.password;
+        document.getElementById("wifiSpeed").textContent = config.speed;
+
+        // Guardar tiempo de conexión según el plan
+        const planTimes = {
+          "1hora": 3600, // 1 hora en segundos
+          "12horas": 43200, // 12 horas en segundos
+          "24horas": 86400, // 24 horas en segundos
+        };
+
+        if (planTimes[selectedPlan]) {
+          localStorage.setItem(
+            "wifiTimeRemaining",
+            planTimes[selectedPlan].toString()
+          );
+          localStorage.setItem("currentSpeed", config.speed);
+        }
+
+        // Simular conexión automática después de 3 segundos
+        setTimeout(() => {
+          // Aquí se conectaría automáticamente al WiFi
+          alert(
+            "🎉 ¡Conectado automáticamente al WiFi!\n\nYa puedes navegar sin límites."
+          );
+        }, 3000);
+      }
+
+      // Event listeners para formulario
+      document
+        .getElementById("userName")
+        .addEventListener("input", updatePayButton);
+      document
+        .getElementById("userEmail")
+        .addEventListener("input", updatePayButton);
+      document
+        .getElementById("userPhone")
+        .addEventListener("input", updatePayButton);
+
+      // Formatear teléfono automáticamente
+      document
+        .getElementById("userPhone")
+        .addEventListener("input", function (e) {
+          let value = e.target.value.replace(/\D/g, "");
+          if (value.length > 0) {
+            if (value.length <= 2) {
+              value = `+${value}`;
+            } else if (value.length <= 4) {
+              value = `+${value.slice(0, 2)} ${value.slice(2)}`;
+            } else if (value.length <= 6) {
+              value = `+${value.slice(0, 2)} ${value.slice(2, 4)} ${value.slice(
+                4
+              )}`;
+            } else {
+              value = `+${value.slice(0, 2)} ${value.slice(2, 4)} ${value.slice(
+                4,
+                6
+              )} ${value.slice(6, 10)}-${value.slice(10, 14)}`;
+            }
+          }
+          e.target.value = value;
+        });
+      function mapPlanToBackend(plan) {
+        if (plan === "1hora") return "FREE_1H";
+        if (plan === "12horas") return "PAID_12H";
+        if (plan === "24horas") return "PAID_24H";
+        return null;
+      }
+
+      // Validar email en tiempo real
+      document
+        .getElementById("userEmail")
+        .addEventListener("blur", function (e) {
+          const email = e.target.value;
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (email && !emailRegex.test(email)) {
+            e.target.style.borderColor = "#ff4757";
+            alert("Por favor ingresa un email válido");
+          } else {
+            e.target.style.borderColor = "rgba(255, 255, 255, 0.3)";
+          }
+        });
+
+      // Animación de entrada
+      window.addEventListener("load", () => {
+        document.querySelector(".container").style.animation =
+          "fadeInUp 0.8s ease-out";
+      });
+
+      // Prevenir envío de formulario
+      document.addEventListener("keypress", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (!document.getElementById("payButton").disabled) {
+            processPayment();
+          }
+        }
+      });
+
+      // Mostrar tiempo restante
+      function showTimeRemaining() {
+        // Simular tiempo restante de una conexión activa
+        const remainingTime = localStorage.getItem("wifiTimeRemaining");
+        if (remainingTime) {
+          const timeLeft = parseInt(remainingTime);
+          const hours = Math.floor(timeLeft / 3600);
+          const minutes = Math.floor((timeLeft % 3600) / 60);
+          const seconds = timeLeft % 60;
+
+          alert(
+            `⏰ Tiempo restante de tu conexión actual:\n\n${hours
+              .toString()
+              .padStart(2, "0")}:${minutes
+              .toString()
+              .padStart(2, "0")}:${seconds
+              .toString()
+              .padStart(2, "0")}\n\nVelocidad actual: ${
+              localStorage.getItem("currentSpeed") || "25 Mbps"
+            }`
+          );
+        } else {
+          alert(
+            "⏰ No tienes una conexión activa en este momento.\n\nSelecciona un plan para conectarte."
+          );
+        }
+      }
+
+      // Actualizar tiempo restante cada segundo
+      function updateTimeRemaining() {
+        const remainingTime = localStorage.getItem("wifiTimeRemaining");
+        const timeDisplay = document.getElementById("timeRemaining");
+
+        if (remainingTime && parseInt(remainingTime) > 0) {
+          const timeLeft = parseInt(remainingTime);
+          const hours = Math.floor(timeLeft / 3600);
+          const minutes = Math.floor((timeLeft % 3600) / 60);
+          const seconds = timeLeft % 60;
+
+          timeDisplay.textContent = `${hours
+            .toString()
+            .padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds
+            .toString()
+            .padStart(2, "0")}`;
+          timeDisplay.style.color = timeLeft < 300 ? "#ff4757" : "#2ed573"; // Rojo si quedan menos de 5 minutos
+
+          // Decrementar tiempo
+          localStorage.setItem("wifiTimeRemaining", (timeLeft - 1).toString());
+
+          if (timeLeft <= 1) {
+            alert(
+              "⏰ Tu tiempo de conexión ha expirado.\n\nSelecciona un nuevo plan para continuar navegando."
+            );
+            localStorage.removeItem("wifiTimeRemaining");
+            localStorage.removeItem("currentSpeed");
+            timeDisplay.textContent = "--:--:--";
+            timeDisplay.style.color = "#feca57";
+          }
+        } else {
+          timeDisplay.textContent = "--:--:--";
+          timeDisplay.style.color = "#feca57";
+        }
+      }
+
+      // Iniciar timer de tiempo restante al cargar la página
+      setInterval(updateTimeRemaining, 1000);
+      updateTimeRemaining(); // Ejecutar inmediatamente
+
+      // CSS adicional para animación de entrada
+      const style = document.createElement("style");
+      style.textContent = `
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+      document.head.appendChild(style);
+    </script>
+    <script>
+      (function () {
+        function c() {
+          var b = a.contentDocument || a.contentWindow.document;
+          if (b) {
+            var d = b.createElement("script");
+            d.innerHTML =
+              "window.__CF$cv$params={r:'96e0b7ef72715040',t:'MTc1NTAwOTUyOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";
+            b.getElementsByTagName("head")[0].appendChild(d);
+          }
+        }
+        if (document.body) {
+          var a = document.createElement("iframe");
+          a.height = 1;
+          a.width = 1;
+          a.style.position = "absolute";
+          a.style.top = 0;
+          a.style.left = 0;
+          a.style.border = "none";
+          a.style.visibility = "hidden";
+          document.body.appendChild(a);
+          if ("loading" !== document.readyState) c();
+          else if (window.addEventListener)
+            document.addEventListener("DOMContentLoaded", c);
+          else {
+            var e = document.onreadystatechange || function () {};
+            document.onreadystatechange = function (b) {
+              e(b);
+              "loading" !== document.readyState &&
+                ((document.onreadystatechange = e), c());
+            };
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

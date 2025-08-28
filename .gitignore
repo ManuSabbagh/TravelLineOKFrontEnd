@@ -1,0 +1,12 @@
+﻿# OS
+Thumbs.db
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
+
+# Node/Build (por si luego agregás tooling)
+dist/
+build/
+node_modules/
