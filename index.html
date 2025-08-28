@@ -541,6 +541,99 @@
       let qrTimer = null;
       let qrCountdown = 30;
 
+      // Lee ?order_id=... cuando Mercado Pago te devuelve
+      const ORDER_ID_FROM_URL = new URLSearchParams(location.search).get(
+        "order_id"
+      );
+      const FAILED_FLAG = new URLSearchParams(location.search).get("failed");
+
+      // Polling del estado de la orden
+      async function pollOrder(
+        orderId,
+        { intervalMs = 2000, maxMs = 120000 } = {}
+      ) {
+        const t0 = Date.now();
+        while (Date.now() - t0 < maxMs) {
+          try {
+            const r = await fetch(`${API_BASE}/orders/${orderId}`);
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            const data = await r.json(); // {status, plan, ...}
+
+            if (data.status === "approved") return { ok: true, data };
+            if (data.status === "rejected") return { ok: false, data };
+
+            // pending aún: esperamos y seguimos
+            await new Promise((res) => setTimeout(res, intervalMs));
+          } catch (e) {
+            // falló la consulta, reintenta suave
+            await new Promise((res) => setTimeout(res, intervalMs));
+          }
+        }
+        // Timeout
+        return { timeout: true };
+      }
+
+      // Muestra el resultado en tu misma UI
+      function showResultApproved(planUi) {
+        // reutiliza tu successMessage:
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("successMessage").style.display = "block";
+
+        const wifiConfigs = {
+          "1hora": { password: "Free1H_2024!", speed: "5 Mbps" },
+          "12horas": { password: "Wifi12H_2024!", speed: "25 Mbps" },
+          "24horas": { password: "Wifi24H_2024!", speed: "35 Mbps" },
+        };
+        const cfg = wifiConfigs[planUi] || wifiConfigs["12horas"];
+        document.getElementById("wifiPassword").textContent = cfg.password;
+        document.getElementById("wifiSpeed").textContent = cfg.speed;
+      }
+
+      function showResultRejected() {
+        document.getElementById("loading").style.display = "none";
+        alert("El pago no se aprobó. Por favor, intentá nuevamente.");
+      }
+
+      // Mapear plan backend -> etiqueta UI (para mostrar credenciales/velocidad)
+      function mapPlanFromBackend(plan) {
+        if (plan === "FREE_1H") return "1hora";
+        if (plan === "PAID_12H") return "12horas";
+        if (plan === "PAID_24H") return "24horas";
+        return "12horas";
+      }
+
+      // Si volvimos desde MP con order_id: arrancamos el flow de resultado
+      (async function handleReturnFromMP() {
+        if (!ORDER_ID_FROM_URL) return;
+
+        // Mostrar “cargando” mientras consultamos
+        const loading = document.getElementById("loading");
+        const payBtn = document.getElementById("payButton");
+        if (loading) loading.style.display = "block";
+        if (payBtn) payBtn.disabled = true;
+
+        // Opcional: si MP nos marcó failed=1, lo indicamos (igual chequeamos backend)
+        if (FAILED_FLAG) {
+          console.log("MP back_url venía con failed=1");
+        }
+
+        const res = await pollOrder(ORDER_ID_FROM_URL);
+        if (res?.ok) {
+          const planUi = mapPlanFromBackend(res.data.plan);
+          showResultApproved(planUi);
+        } else if (res?.timeout) {
+          // Si tardó mucho, el usuario puede reintentar; el webhook suele resolver igual
+          alert(
+            "Aún no recibimos confirmación del pago. Actualizá la página en unos segundos."
+          );
+          if (loading) loading.style.display = "none";
+          if (payBtn) payBtn.disabled = false;
+        } else {
+          showResultRejected();
+          if (payBtn) payBtn.disabled = false;
+        }
+      })();
+
       function getQueryParam(name) {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get(name);
