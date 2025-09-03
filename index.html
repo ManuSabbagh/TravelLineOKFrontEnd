@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
@@ -533,6 +534,16 @@
     </div>
 
     <script>
+      // --- CONFIG (dejar esto arriba del todo) ---
+      const API_BASE = "https://travellineok.com"; // único lugar
+
+      const urlParams = new URLSearchParams(location.search);
+      const MAC_FROM_URL = (
+        urlParams.get("mac") || "AA:BB:CC:DD:EE:FF"
+      ).toUpperCase();
+      const BUS_ID_FROM_URL = urlParams.get("bus_id") || "BUS-001";
+      const ORDER_ID_FROM_URL = urlParams.get("order_id");
+      const FAILED_FLAG = urlParams.get("failed");
       // Variables globales
       let selectedPlan = null;
       let selectedWallet = null;
@@ -541,7 +552,13 @@
       let qrTimer = null;
       let qrCountdown = 30;
 
-      async function waitForInternet({ tries = 20, intervalMs = 1000 } = {}) {
+      window.addEventListener("load", () => {
+        const btn = document.getElementById("payButton");
+        if (btn) btn.disabled = true;
+        updatePayButton();
+      });
+
+      async function waitForInternet({ tries = 60, intervalMs = 1000 } = {}) {
         for (let i = 0; i < tries; i++) {
           try {
             await fetch("https://travellineok.com/health", {
@@ -557,12 +574,6 @@
         }
         return false;
       }
-
-      // Lee ?order_id=... cuando Mercado Pago te devuelve
-      const ORDER_ID_FROM_URL = new URLSearchParams(location.search).get(
-        "order_id"
-      );
-      const FAILED_FLAG = new URLSearchParams(location.search).get("failed");
 
       // Polling del estado de la orden
       async function pollOrder(
@@ -652,20 +663,9 @@
       })();
 
       function getQueryParam(name) {
-        const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get(name);
       }
-      const MAC_FROM_URL = getQueryParam("mac") || "AA:BB:CC:DD:EE:FF";
-      const BUS_ID_FROM_URL = getQueryParam("bus_id") || "BUS-001";
 
-      // --- CONFIG DEL API (ajústalo para pruebas locales si querés) ---
-      // Si la página se sirve en https://travellineok.com deja vacío:
-      const API_BASE = "https://travellineok.com";
-      // Para probar el HTML localmente contra el VPS, poné:
-      // const API_BASE = 'https://travellineok.com';
-
-      // --- Parámetros que idealmente te pasa el router en la URL ---
-      const urlParams = new URLSearchParams(location.search);
       const mac = (urlParams.get("mac") || "AA:BB:CC:DD:EE:FF").toUpperCase();
       const busId = urlParams.get("bus_id") || "BUS-001";
 
@@ -676,10 +676,6 @@
         if (plan === "24horas") return "PAID_24H";
         return null;
       }
-      // Configuración MercadoPago V9
-      const mp = new MercadoPago("APP_USR-12345678-123456-123456789-12345678", {
-        locale: "es-AR",
-      });
 
       // Seleccionar plan
       function selectPlan(plan, price) {
@@ -803,7 +799,7 @@
         document.getElementById("payButton").disabled = true;
 
         try {
-          const resp = await fetch("https://travellineok.com/orders", {
+          const resp = await fetch(`${API_BASE}/orders`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -855,43 +851,10 @@
         }
       }
 
-      // Crear preferencia de pago
-      async function createPaymentPreference() {
-        // Simulación de API call a MercadoPago V9
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              id: "PREF_" + Date.now(),
-              qr_code: generateQRCode(),
-              payment_url:
-                "https://mercadopago.com/checkout/v1/redirect?pref_id=PREF_" +
-                Date.now(),
-            });
-          }, 2000);
-        });
-      }
-
       // Generar código QR dinámico
       function generateQRCode() {
         const codes = ["📱💙", "💳🔵", "📲💜", "💰🟢", "🔒💛"];
         return codes[Math.floor(Math.random() * codes.length)];
-      }
-
-      // Mostrar pago con QR
-      function showQRPayment(preference) {
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("qrContainer").style.display = "block";
-
-        // Actualizar QR
-        updateQRCode();
-
-        // Iniciar timer de QR dinámico
-        startQRTimer();
-
-        // Simular verificación de pago
-        setTimeout(() => {
-          completePayment();
-        }, 8000);
       }
 
       // Mostrar formulario de tarjeta
@@ -1003,12 +966,6 @@
           }
           e.target.value = value;
         });
-      function mapPlanToBackend(plan) {
-        if (plan === "1hora") return "FREE_1H";
-        if (plan === "12horas") return "PAID_12H";
-        if (plan === "24horas") return "PAID_24H";
-        return null;
-      }
 
       // Validar email en tiempo real
       document
