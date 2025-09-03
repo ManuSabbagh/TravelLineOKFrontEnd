@@ -541,6 +541,23 @@
       let qrTimer = null;
       let qrCountdown = 30;
 
+      async function waitForInternet({ tries = 20, intervalMs = 1000 } = {}) {
+        for (let i = 0; i < tries; i++) {
+          try {
+            await fetch("https://travellineok.com/health", {
+              cache: "no-store",
+              mode: "no-cors",
+            });
+            // Si llega hasta acá, ya no hubo bloqueo de red.
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("successMessage").style.display = "block";
+            return true;
+          } catch (e) {}
+          await new Promise((r) => setTimeout(r, intervalMs));
+        }
+        return false;
+      }
+
       // Lee ?order_id=... cuando Mercado Pago te devuelve
       const ORDER_ID_FROM_URL = new URLSearchParams(location.search).get(
         "order_id"
@@ -805,13 +822,22 @@
           // data: { order_id, status, init_point }
 
           if (planApi === "FREE_1H") {
-            // Gratis: el backend ya deja approved y (cuando tengas el Mikrotik online) habilita acceso.
+            // dejamos el loading visible mientras esperamos conectividad real
+            const ok = await waitForInternet({ tries: 20, intervalMs: 1000 });
+
             document.getElementById("loading").style.display = "none";
-            document.getElementById("successMessage").style.display = "block";
-            // Configuración “demo” de credenciales/velocidad si querés mantener el UI
-            document.getElementById("wifiPassword").textContent =
-              "Free1H_2024!";
-            document.getElementById("wifiSpeed").textContent = "5 Mbps";
+            if (ok) {
+              document.getElementById("successMessage").style.display = "block";
+              // texto/velocidad demo (como ya tenías)
+              document.getElementById("wifiPassword").textContent =
+                "Free1H_2024!";
+              document.getElementById("wifiSpeed").textContent = "5 Mbps";
+            } else {
+              alert(
+                "Se habilitó tu acceso FREE, pero aún no detectamos conexión. Reintentá o reconectá el Wi-Fi."
+              );
+              document.getElementById("payButton").disabled = false;
+            }
             return;
           }
 
