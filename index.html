@@ -652,37 +652,12 @@
         }
       }
 
-      function tryOpenCheckout(initPoint) {
-        // Intento 1: abrir en nueva pestaña/ventana (necesita gesto del usuario)
-        let win = null;
-        try {
-          win = window.open(initPoint, "_blank", "noopener");
-        } catch (e) {
-          // algunos webviews tiran excepción
-          win = null;
-        }
-
-        // Si el popup fue bloqueado o el webview no deja abrir, mostramos el fallback
-        if (!win) {
-          showExternalFallback(initPoint);
-        }
-      }
-
       // Si el usuario vuelve desde el navegador externo, seguimos chequeando la orden
       document.addEventListener("visibilitychange", () => {
         if (!document.hidden) {
           // al volver al portal, no hacemos nada especial; el poll ya corre si estaba iniciado
         }
       });
-
-      function isWebView() {
-        const ua = navigator.userAgent || "";
-        const isAndroid = /Android/i.test(ua);
-        const isIOS = /iPhone|iPad|iPod/i.test(ua);
-        const isAndroidWV = isAndroid && /\; wv\)/i.test(ua);
-        const isIOSWV = isIOS && !/Safari/i.test(ua);
-        return isAndroidWV || isIOSWV;
-      }
 
       function openExternal(url) {
         if (!url) return;
@@ -948,7 +923,6 @@
 
         const planApi = mapPlanToApi(selectedPlan);
 
-        // UI: loading ON mientras creo la orden
         const loading = document.getElementById("loading");
         const payBtn = document.getElementById("payButton");
         if (loading) loading.style.display = "block";
@@ -990,7 +964,7 @@
             return;
           }
 
-          // PAGOS: NO redirigimos. Mostramos el panel con botón para abrir afuera.
+          // PAGOS: NO redirigimos. Mostramos panel con link/botón externo.
           const initPoint = data.init_point;
           if (!initPoint)
             throw new Error("No llegó init_point desde el backend.");
@@ -998,18 +972,29 @@
           window.__lastInitPoint = initPoint;
           window.__lastOrderId = data.order_id;
 
-          // Preparamos link de respaldo y mostramos el panel
-          const link = document.getElementById("initPointLink");
-          if (link) link.href = initPoint;
+          // Configurar TU fallback: link y panel visible
+          const fallbackLink = document.getElementById("fallbackLink");
+          if (fallbackLink) fallbackLink.href = initPoint;
+
+          // (opcional) mostrar el enlace crudo
+          const rawBox = document.getElementById("rawLinkBox");
+          const raw = document.getElementById("rawLink");
+          if (raw && rawBox) {
+            raw.textContent = initPoint;
+            rawBox.style.display = "block";
+          }
+
+          const hintBox = document.getElementById("externalHint");
+          if (hintBox) hintBox.style.display = "block";
+
+          const openBtn = document.getElementById("openExternalBtn");
+          if (openBtn) openBtn.style.display = "block";
 
           if (loading) loading.style.display = "none";
           if (payBtn) payBtn.disabled = false;
 
-          const panel = document.getElementById("externalPayPanel");
-          if (panel) panel.style.display = "block";
-
-          // Importante: NO hagas location.href ni window.open acá.
-          // El usuario tocará “Abrir Mercado Pago” → openExternalAndPoll()
+          // Importante: acá NO hacemos location.href ni window.open.
+          // El usuario usará “Abrir en navegador” (manualExternalOpen).
         } catch (err) {
           console.error(err);
           alert("No se pudo iniciar el proceso. " + (err?.message || err));
