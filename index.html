@@ -568,7 +568,6 @@
           margin-top: 10px;
           background: linear-gradient(45deg, #10ac84, #1dd1a1);
         "
-        onclick="manualExternalOpen()"
       >
         🌐 Abrir en navegador (si no se abre solo)
       </button>
@@ -635,22 +634,6 @@
 
         return isAndroidWV || isIOSWV;
       }
-      function showExternalFallback(url) {
-        const box = document.getElementById("externalHint");
-        const link = document.getElementById("fallbackLink");
-        const rawBox = document.getElementById("rawLinkBox");
-        const raw = document.getElementById("rawLink");
-
-        if (!box || !link) return;
-
-        link.href = url;
-        box.style.display = "block";
-
-        if (rawBox && raw) {
-          raw.textContent = url;
-          rawBox.style.display = "block";
-        }
-      }
 
       // Si el usuario vuelve desde el navegador externo, seguimos chequeando la orden
       document.addEventListener("visibilitychange", () => {
@@ -676,16 +659,45 @@
         }
       }
 
+      // Arranca el polling para la orden paga (después de abrir MP afuera)
+      async function startPaidPolling() {
+        const id = window.__lastOrderId;
+        if (!id) return;
+
+        // mostramos loading mientras esperamos la aprobación (opcional)
+        const loading = document.getElementById("loading");
+        if (loading) loading.style.display = "block";
+
+        const res = await pollOrder(id, { intervalMs: 3000, maxMs: 180000 });
+        if (loading) loading.style.display = "none";
+
+        if (res?.ok) {
+          const planUi = mapPlanFromBackend(res.data.plan);
+          showResultApproved(planUi);
+        } else if (res?.timeout) {
+          alert(
+            "Aún no recibimos confirmación del pago. Volvé desde MP y actualizá esta página."
+          );
+        } else {
+          alert("El pago fue rechazado o cancelado. Probá nuevamente.");
+        }
+      }
+
+      // Handler único para abrir afuera + iniciar polling
+      function openExternalAndPoll(e) {
+        if (e) e.preventDefault();
+        if (!window.__lastInitPoint || !window.__lastOrderId) {
+          alert("Primero tocá ‘Pagar’ para generar la orden.");
+          return;
+        }
+        openExternal(window.__lastInitPoint);
+        startPaidPolling();
+      }
+
       // Para el botón de respaldo
       function manualExternalOpen() {
         if (window.__lastInitPoint) openExternal(window.__lastInitPoint);
       }
-
-      window.addEventListener("load", () => {
-        const btn = document.getElementById("payButton");
-        if (btn) btn.disabled = true;
-        updatePayButton();
-      });
 
       async function waitForInternet({ tries = 60, intervalMs = 1000 } = {}) {
         for (let i = 0; i < tries; i++) {
@@ -972,9 +984,12 @@
           window.__lastInitPoint = initPoint;
           window.__lastOrderId = data.order_id;
 
-          // Configurar TU fallback: link y panel visible
-          const fallbackLink = document.getElementById("fallbackLink");
-          if (fallbackLink) fallbackLink.href = initPoint;
+          document
+            .getElementById("externalHint")
+            ?.style.setProperty("display", "block");
+          document
+            .getElementById("openExternalBtn")
+            ?.style.setProperty("display", "block");
 
           // (opcional) mostrar el enlace crudo
           const rawBox = document.getElementById("rawLinkBox");
@@ -983,12 +998,6 @@
             raw.textContent = initPoint;
             rawBox.style.display = "block";
           }
-
-          const hintBox = document.getElementById("externalHint");
-          if (hintBox) hintBox.style.display = "block";
-
-          const openBtn = document.getElementById("openExternalBtn");
-          if (openBtn) openBtn.style.display = "block";
 
           if (loading) loading.style.display = "none";
           if (payBtn) payBtn.disabled = false;
@@ -1133,10 +1142,23 @@
           }
         });
 
-      // Animación de entrada
       window.addEventListener("load", () => {
-        document.querySelector(".container").style.animation =
-          "fadeInUp 0.8s ease-out";
+        // Link fallback: sin href, sólo handler
+        const fallback = document.getElementById("fallbackLink");
+        if (fallback) {
+          fallback.removeAttribute("href");
+          fallback.style.cursor = "pointer";
+          fallback.addEventListener("click", openExternalAndPoll);
+        }
+
+        // Botón verde
+        const btn = document.getElementById("openExternalBtn");
+        if (btn) btn.addEventListener("click", openExternalAndPoll);
+
+        // Estado del botón pagar
+        const pay = document.getElementById("payButton");
+        if (pay) pay.disabled = true;
+        updatePayButton();
       });
 
       // Prevenir envío de formulario
