@@ -220,6 +220,32 @@
         margin-top: 20px;
       }
 
+      .external-box {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px dashed rgba(255, 255, 255, 0.35);
+        border-radius: 12px;
+        padding: 12px;
+      }
+      .open-external {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 10px 14px;
+        border-radius: 10px;
+        background: rgba(72, 219, 251, 0.2);
+        border: 1px solid #48dbfb;
+        color: #fff;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .open-external:hover {
+        filter: brightness(1.1);
+      }
+      .mini-note {
+        opacity: 0.85;
+        font-size: 0.9rem;
+        margin-top: 6px;
+      }
+
       .pay-button:hover {
         transform: translateY(-3px);
         box-shadow: 0 15px 30px rgba(72, 219, 251, 0.4);
@@ -504,6 +530,36 @@
         💳 Selecciona un plan para continuar
       </button>
 
+      <!-- Fallback externo (oculto por defecto) -->
+      <div id="externalHint" style="display: none; margin-top: 12px">
+        <div class="external-box">
+          <p><strong>¿No se abrió Mercado Pago?</strong></p>
+          <a
+            id="fallbackLink"
+            class="open-external"
+            href="#"
+            target="_blank"
+            rel="noopener"
+          >
+            🔗 Abrir pago en el navegador (recomendado)
+          </a>
+          <div class="mini-note">
+            Si el navegador interno bloquea ventanas, usá este botón. No te
+            habilita internet hasta que el pago quede aprobado.
+          </div>
+
+          <!-- (opcional) Mostrar el link para copiar -->
+          <div
+            id="rawLinkBox"
+            style="display: none; word-break: break-all; margin-top: 8px"
+          >
+            <small
+              >O copiá y pegá este enlace: <span id="rawLink"></span
+            ></small>
+          </div>
+        </div>
+      </div>
+
       <button
         id="openExternalBtn"
         class="pay-button"
@@ -579,6 +635,45 @@
 
         return isAndroidWV || isIOSWV;
       }
+      function showExternalFallback(url) {
+        const box = document.getElementById("externalHint");
+        const link = document.getElementById("fallbackLink");
+        const rawBox = document.getElementById("rawLinkBox");
+        const raw = document.getElementById("rawLink");
+
+        if (!box || !link) return;
+
+        link.href = url;
+        box.style.display = "block";
+
+        if (rawBox && raw) {
+          raw.textContent = url;
+          rawBox.style.display = "block";
+        }
+      }
+
+      function tryOpenCheckout(initPoint) {
+        // Intento 1: abrir en nueva pestaña/ventana (necesita gesto del usuario)
+        let win = null;
+        try {
+          win = window.open(initPoint, "_blank", "noopener");
+        } catch (e) {
+          // algunos webviews tiran excepción
+          win = null;
+        }
+
+        // Si el popup fue bloqueado o el webview no deja abrir, mostramos el fallback
+        if (!win) {
+          showExternalFallback(initPoint);
+        }
+      }
+
+      // Si el usuario vuelve desde el navegador externo, seguimos chequeando la orden
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          // al volver al portal, no hacemos nada especial; el poll ya corre si estaba iniciado
+        }
+      });
 
       function openExternal(url) {
         const ua = navigator.userAgent || "";
@@ -847,8 +942,10 @@
         const planApi = mapPlanToApi(selectedPlan);
 
         // UI: loading ON
-        document.getElementById("loading").style.display = "block";
-        document.getElementById("payButton").disabled = true;
+        const loading = document.getElementById("loading");
+        const payBtn = document.getElementById("payButton");
+        if (loading) loading.style.display = "block";
+        if (payBtn) payBtn.disabled = true;
 
         try {
           const resp = await fetch(`${API_BASE}/orders`, {
@@ -866,17 +963,15 @@
             throw new Error(`Error backend (${resp.status}): ${txt}`);
           }
 
-          const data = await resp.json();
-          // data: { order_id, status, init_point }
+          const data = await resp.json(); // { order_id, status, init_point }
 
+          // --- FREE ---
           if (planApi === "FREE_1H") {
-            // dejamos el loading visible mientras esperamos conectividad real
             const ok = await waitForInternet({ tries: 20, intervalMs: 1000 });
+            if (loading) loading.style.display = "none";
 
-            document.getElementById("loading").style.display = "none";
             if (ok) {
               document.getElementById("successMessage").style.display = "block";
-              // texto/velocidad demo (como ya tenías)
               document.getElementById("wifiPassword").textContent =
                 "Free1H_2024!";
               document.getElementById("wifiSpeed").textContent = "5 Mbps";
@@ -884,38 +979,54 @@
               alert(
                 "Se habilitó tu acceso FREE, pero aún no detectamos conexión. Reintentá o reconectá el Wi-Fi."
               );
-              document.getElementById("payButton").disabled = false;
+              if (payBtn) payBtn.disabled = false;
             }
             return;
           }
 
-          // Pago: abrir Mercado Pago fuera del webview
+          // --- PAGOS (MP) ---
           const initPoint = data.init_point;
           if (!initPoint)
             throw new Error("No llegó init_point desde el backend.");
 
-          // guardamos para el botón de respaldo
+          // Guardamos referencia
           window.__lastInitPoint = initPoint;
+          localStorage.setItem("last_order_id", String(data.order_id));
+
+          // 1) Intentar abrir MP en ventana/pestaña nueva; si el webview bloquea, se muestra el fallback
+          tryOpenCheckout(initPoint);
+
+          // 2) Empezar a consultar la orden hasta que MP apruebe (o timeout)
+          const pollRes = await pollOrder(data.order_id, {
+            intervalMs: 2000,
+            maxMs: 5 * 60 * 1000,
+          });
+
+          if (pollRes?.ok) {
+            // Aprobado: mostrar éxito (solo UI; la habilitación real la hace el MikroTik por PULL)
+            const planUi = mapPlanFromBackend(pollRes.data.plan);
+            showResultApproved(planUi); // ya oculta "loading" y muestra success
+
+            // Esperar a detectar internet real (opcional, mejora UX)
+            await waitForInternet({ tries: 30, intervalMs: 1000 });
+          } else if (pollRes?.timeout) {
+            if (loading) loading.style.display = "none";
+            alert(
+              "Aún no recibimos confirmación del pago. Si ya pagaste, volvé al portal en unos segundos."
+            );
+            if (payBtn) payBtn.disabled = false;
+            // El bloque de fallback queda visible para abrir MP manualmente.
+          } else {
+            if (loading) loading.style.display = "none";
+            showResultRejected();
+            if (payBtn) payBtn.disabled = false;
+          }
         } catch (err) {
           console.error(err);
           alert("No se pudo iniciar el proceso. " + (err?.message || err));
-          document.getElementById("loading").style.display = "none";
-          document.getElementById("payButton").disabled = false;
+          if (loading) loading.style.display = "none";
+          if (payBtn) payBtn.disabled = false;
         }
-        // Si el portal está en un webview, forzamos navegador externo (Chrome/Safari)
-        if (isWebView()) {
-          // Mostrar botón de respaldo por si el intent falla
-          const backupBtn = document.getElementById("openExternalBtn");
-          if (backupBtn) backupBtn.style.display = "block";
-
-          // Intento automático
-          openExternal(initPoint);
-
-          // dejamos el loading visible mientras el usuario va/ vuelve del navegador externo
-          return;
-        }
-        // No es webview: redirección normal también funciona
-        location.href = initPoint;
       }
 
       // Generar código QR dinámico
