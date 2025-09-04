@@ -504,6 +504,19 @@
         💳 Selecciona un plan para continuar
       </button>
 
+      <button
+        id="openExternalBtn"
+        class="pay-button"
+        style="
+          display: none;
+          margin-top: 10px;
+          background: linear-gradient(45deg, #10ac84, #1dd1a1);
+        "
+        onclick="manualExternalOpen()"
+      >
+        🌐 Abrir en navegador (si no se abre solo)
+      </button>
+
       <!-- Loading -->
       <div class="loading" id="loading">
         <div class="spinner"></div>
@@ -551,6 +564,45 @@
       let paymentTimer = null;
       let qrTimer = null;
       let qrCountdown = 30;
+
+      // --- Helpers de navegador externo / webview ---
+      function isWebView() {
+        const ua = navigator.userAgent || "";
+        const isAndroid = /Android/i.test(ua);
+        const isIOS = /iPhone|iPad|iPod/i.test(ua);
+
+        // Android webview suele traer "; wv)" y no el Chrome completo
+        const isAndroidWV = isAndroid && /\; wv\)/i.test(ua);
+
+        // iOS webview: Safari real trae "Safari"; los webviews típicos NO.
+        const isIOSWV = isIOS && !/Safari/i.test(ua);
+
+        return isAndroidWV || isIOSWV;
+      }
+
+      function openExternal(url) {
+        const ua = navigator.userAgent || "";
+        const isAndroid = /Android/i.test(ua);
+
+        if (isAndroid) {
+          // Intento abrir con Chrome directamente (intent:// + fallback)
+          const stripped = url.replace(/^https?:\/\//, "");
+          const intent = `intent://${stripped}#Intent;scheme=https;package=com.android.chrome;end`;
+          location.href = intent;
+          // Si el intent falla, abrimos en una pestaña nueva
+          setTimeout(() => {
+            window.open(url, "_blank", "noopener");
+          }, 500);
+        } else {
+          // iOS / otros
+          window.open(url, "_blank", "noopener");
+        }
+      }
+
+      // Para el botón de respaldo
+      function manualExternalOpen() {
+        if (window.__lastInitPoint) openExternal(window.__lastInitPoint);
+      }
 
       window.addEventListener("load", () => {
         const btn = document.getElementById("payButton");
@@ -837,18 +889,33 @@
             return;
           }
 
-          // Pago: redirigir a Mercado Pago
+          // Pago: abrir Mercado Pago fuera del webview
           const initPoint = data.init_point;
-          if (!initPoint) {
+          if (!initPoint)
             throw new Error("No llegó init_point desde el backend.");
-          }
-          window.location.href = initPoint;
+
+          // guardamos para el botón de respaldo
+          window.__lastInitPoint = initPoint;
         } catch (err) {
           console.error(err);
           alert("No se pudo iniciar el proceso. " + (err?.message || err));
           document.getElementById("loading").style.display = "none";
           document.getElementById("payButton").disabled = false;
         }
+        // Si el portal está en un webview, forzamos navegador externo (Chrome/Safari)
+        if (isWebView()) {
+          // Mostrar botón de respaldo por si el intent falla
+          const backupBtn = document.getElementById("openExternalBtn");
+          if (backupBtn) backupBtn.style.display = "block";
+
+          // Intento automático
+          openExternal(initPoint);
+
+          // dejamos el loading visible mientras el usuario va/ vuelve del navegador externo
+          return;
+        }
+        // No es webview: redirección normal también funciona
+        location.href = initPoint;
       }
 
       // Generar código QR dinámico
