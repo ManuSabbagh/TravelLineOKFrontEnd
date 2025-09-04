@@ -675,21 +675,28 @@
         }
       });
 
+      function isWebView() {
+        const ua = navigator.userAgent || "";
+        const isAndroid = /Android/i.test(ua);
+        const isIOS = /iPhone|iPad|iPod/i.test(ua);
+        const isAndroidWV = isAndroid && /\; wv\)/i.test(ua);
+        const isIOSWV = isIOS && !/Safari/i.test(ua);
+        return isAndroidWV || isIOSWV;
+      }
+
       function openExternal(url) {
+        if (!url) return;
         const ua = navigator.userAgent || "";
         const isAndroid = /Android/i.test(ua);
 
         if (isAndroid) {
-          // Intento abrir con Chrome directamente (intent:// + fallback)
           const stripped = url.replace(/^https?:\/\//, "");
           const intent = `intent://${stripped}#Intent;scheme=https;package=com.android.chrome;end`;
           location.href = intent;
-          // Si el intent falla, abrimos en una pestaña nueva
           setTimeout(() => {
             window.open(url, "_blank", "noopener");
           }, 500);
         } else {
-          // iOS / otros
           window.open(url, "_blank", "noopener");
         }
       }
