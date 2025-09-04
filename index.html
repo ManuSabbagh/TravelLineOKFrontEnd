@@ -924,7 +924,7 @@
       }
       */
 
-      // Procesar pago
+      // Procesar pago (sin redirección automática)
       async function processPayment() {
         const userName = document.getElementById("userName").value.trim();
         const userEmail = document.getElementById("userEmail").value.trim();
@@ -941,7 +941,7 @@
 
         const planApi = mapPlanToApi(selectedPlan);
 
-        // UI: loading ON
+        // UI: loading ON mientras creo la orden
         const loading = document.getElementById("loading");
         const payBtn = document.getElementById("payButton");
         if (loading) loading.style.display = "block";
@@ -957,7 +957,6 @@
               bus_id: BUS_ID_FROM_URL,
             }),
           });
-
           if (!resp.ok) {
             const txt = await resp.text();
             throw new Error(`Error backend (${resp.status}): ${txt}`);
@@ -965,7 +964,7 @@
 
           const data = await resp.json(); // { order_id, status, init_point }
 
-          // --- FREE ---
+          // FREE: habilita y listo
           if (planApi === "FREE_1H") {
             const ok = await waitForInternet({ tries: 20, intervalMs: 1000 });
             if (loading) loading.style.display = "none";
@@ -984,43 +983,26 @@
             return;
           }
 
-          // --- PAGOS (MP) ---
+          // PAGOS: NO redirigimos. Mostramos el panel con botón para abrir afuera.
           const initPoint = data.init_point;
           if (!initPoint)
             throw new Error("No llegó init_point desde el backend.");
 
-          // Guardamos referencia
           window.__lastInitPoint = initPoint;
-          localStorage.setItem("last_order_id", String(data.order_id));
+          window.__lastOrderId = data.order_id;
 
-          // 1) Intentar abrir MP en ventana/pestaña nueva; si el webview bloquea, se muestra el fallback
-          tryOpenCheckout(initPoint);
+          // Preparamos link de respaldo y mostramos el panel
+          const link = document.getElementById("initPointLink");
+          if (link) link.href = initPoint;
 
-          // 2) Empezar a consultar la orden hasta que MP apruebe (o timeout)
-          const pollRes = await pollOrder(data.order_id, {
-            intervalMs: 2000,
-            maxMs: 5 * 60 * 1000,
-          });
+          if (loading) loading.style.display = "none";
+          if (payBtn) payBtn.disabled = false;
 
-          if (pollRes?.ok) {
-            // Aprobado: mostrar éxito (solo UI; la habilitación real la hace el MikroTik por PULL)
-            const planUi = mapPlanFromBackend(pollRes.data.plan);
-            showResultApproved(planUi); // ya oculta "loading" y muestra success
+          const panel = document.getElementById("externalPayPanel");
+          if (panel) panel.style.display = "block";
 
-            // Esperar a detectar internet real (opcional, mejora UX)
-            await waitForInternet({ tries: 30, intervalMs: 1000 });
-          } else if (pollRes?.timeout) {
-            if (loading) loading.style.display = "none";
-            alert(
-              "Aún no recibimos confirmación del pago. Si ya pagaste, volvé al portal en unos segundos."
-            );
-            if (payBtn) payBtn.disabled = false;
-            // El bloque de fallback queda visible para abrir MP manualmente.
-          } else {
-            if (loading) loading.style.display = "none";
-            showResultRejected();
-            if (payBtn) payBtn.disabled = false;
-          }
+          // Importante: NO hagas location.href ni window.open acá.
+          // El usuario tocará “Abrir Mercado Pago” → openExternalAndPoll()
         } catch (err) {
           console.error(err);
           alert("No se pudo iniciar el proceso. " + (err?.message || err));
