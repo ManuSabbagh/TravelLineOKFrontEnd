@@ -644,21 +644,54 @@
 
       function openExternal(url) {
         if (!url) return;
-        const ua = navigator.userAgent || "";
-        const isAndroid = /Android/i.test(ua);
+        try {
+          // asegurar https absoluto
+          if (!/^https?:\/\//i.test(url)) url = "https://" + url;
 
-        if (isAndroid) {
-          const stripped = url.replace(/^https?:\/\//, "");
-          const intent = `intent://${stripped}#Intent;scheme=https;package=com.android.chrome;end`;
-          location.href = intent;
-          setTimeout(() => {
-            window.open(url, "_blank", "noopener");
-          }, 500);
-        } else {
+          const ua = navigator.userAgent || "";
+          const isAndroid = /Android/i.test(ua);
+
+          if (isAndroid) {
+            // Intent con fallback: si Chrome no toma el intent, abre la URL “normal”
+            const enc = encodeURIComponent(url);
+            const stripped = url.replace(/^https?:\/\//, "");
+            // 1) Intent → abre Chrome fuera del webview
+            location.href =
+              `intent://${stripped}` +
+              `#Intent;scheme=https;package=com.android.chrome;` +
+              `S.browser_fallback_url=${enc};end`;
+
+            // 2) “cinturón y tirantes”: tras un tick, hacemos click a un <a target=_blank>
+            setTimeout(() => {
+              const a = document.createElement("a");
+              a.href = url;
+              a.target = "_blank";
+              a.rel = "noopener";
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+            }, 600);
+          } else {
+            // iOS / otros: usá <a target=_blank> para garantizar gesto de usuario
+            const a = document.createElement("a");
+            a.href = url;
+            a.target = "_blank";
+            a.rel = "noopener";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+
+            // pequeño fallback adicional
+            setTimeout(() => {
+              try {
+                window.location.href = url;
+              } catch (e) {}
+            }, 400);
+          }
+        } catch (e) {
           window.open(url, "_blank", "noopener");
         }
       }
-
       // Arranca el polling para la orden paga (después de abrir MP afuera)
       async function startPaidPolling() {
         const id = window.__lastOrderId;
@@ -982,6 +1015,7 @@
             throw new Error("No llegó init_point desde el backend.");
 
           window.__lastInitPoint = initPoint;
+          console.log("[MP init_point]", initPoint);
           window.__lastOrderId = data.order_id;
 
           document
@@ -1254,41 +1288,6 @@
             }
         `;
       document.head.appendChild(style);
-    </script>
-    <script>
-      (function () {
-        function c() {
-          var b = a.contentDocument || a.contentWindow.document;
-          if (b) {
-            var d = b.createElement("script");
-            d.innerHTML =
-              "window.__CF$cv$params={r:'96e0b7ef72715040',t:'MTc1NTAwOTUyOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";
-            b.getElementsByTagName("head")[0].appendChild(d);
-          }
-        }
-        if (document.body) {
-          var a = document.createElement("iframe");
-          a.height = 1;
-          a.width = 1;
-          a.style.position = "absolute";
-          a.style.top = 0;
-          a.style.left = 0;
-          a.style.border = "none";
-          a.style.visibility = "hidden";
-          document.body.appendChild(a);
-          if ("loading" !== document.readyState) c();
-          else if (window.addEventListener)
-            document.addEventListener("DOMContentLoaded", c);
-          else {
-            var e = document.onreadystatechange || function () {};
-            document.onreadystatechange = function (b) {
-              e(b);
-              "loading" !== document.readyState &&
-                ((document.onreadystatechange = e), c());
-            };
-          }
-        }
-      })();
     </script>
   </body>
 </html>
