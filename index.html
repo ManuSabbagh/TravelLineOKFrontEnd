@@ -642,77 +642,28 @@
         }
       });
 
+      // Apertura EXCLUSIVAMENTE por gesto del usuario (click).
       function openExternal(url) {
         if (!url) return;
-        const ua = navigator.userAgent || "";
-        const isAndroid = /Android/i.test(ua);
-        const isIOS = /iPhone|iPad|iPod/i.test(ua);
-
-        if (isAndroid) {
-          const enc = encodeURIComponent(url);
-          const stripped = url.replace(/^https?:\/\//, "");
-          // ✅ con fallback directo al init_point
-          const intent =
-            `intent://${stripped}` +
-            `#Intent;scheme=https;package=com.android.chrome;` +
-            `S.browser_fallback_url=${enc};end`;
-          // lanzar intent
-          location.href = intent;
-          // 2ª chance por si el intent falla
-          setTimeout(() => {
-            window.location.href = url;
-          }, 800);
-          return;
-        }
-
-        // iOS / otros: primera chance en misma vista (para que el sistema ofrezca “Abrir en Safari”)
-        try {
-          window.location.href = url;
-        } catch (e) {}
-        // 2ª chance con link visible por si bloquea
-        setTimeout(() => {
-          const a = document.createElement("a");
-          a.href = url;
-          a.target = "_blank";
-          a.rel = "noopener";
-          a.textContent = "Abrir Mercado Pago";
-          a.style =
-            "display:block;margin:16px 0;text-align:center;font:16px sans-serif;";
-          document.body.appendChild(a);
-        }, 400);
+        const a = document.createElement("a");
+        a.href = url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
       }
 
       function openExternalAndPoll(e) {
         if (e) e.preventDefault();
         if (!window.__lastInitPoint || !window.__lastOrderId) {
-          alert("Primero creá la orden.");
+          alert("Primero tocá ‘Pagar’ para generar la orden.");
           return;
         }
+        // Abrimos MP en pestaña externa SIN redirecciones automáticas en el webview
         openExternal(window.__lastInitPoint);
-        setTimeout(startPaidPolling, 1000);
-      }
-      // Arranca el polling para la orden paga (después de abrir MP afuera)
-      async function startPaidPolling() {
-        const id = window.__lastOrderId;
-        if (!id) return;
-
-        // mostramos loading mientras esperamos la aprobación (opcional)
-        const loading = document.getElementById("loading");
-        if (loading) loading.style.display = "block";
-
-        const res = await pollOrder(id, { intervalMs: 3000, maxMs: 180000 });
-        if (loading) loading.style.display = "none";
-
-        if (res?.ok) {
-          const planUi = mapPlanFromBackend(res.data.plan);
-          showResultApproved(planUi);
-        } else if (res?.timeout) {
-          alert(
-            "Aún no recibimos confirmación del pago. Volvé desde MP y actualizá esta página."
-          );
-        } else {
-          alert("El pago fue rechazado o cancelado. Probá nuevamente.");
-        }
+        // Arrancamos el polling en el portal actual
+        startPaidPolling();
       }
 
       // Para el botón de respaldo
@@ -867,22 +818,22 @@
       }
 
       /*
-      // Seleccionar billetera
-      function selectWallet(wallet) {
-        // Remover selección anterior
-        document.querySelectorAll(".wallet-option").forEach((option) => {
-          option.classList.remove("selected");
-        });
+          // Seleccionar billetera
+          function selectWallet(wallet) {
+            // Remover selección anterior
+            document.querySelectorAll(".wallet-option").forEach((option) => {
+              option.classList.remove("selected");
+            });
 
-        // Seleccionar nueva billetera
-        document
-          .querySelector(`[data-wallet="${wallet}"]`)
-          .classList.add("selected");
-        selectedWallet = wallet;
+            // Seleccionar nueva billetera
+            document
+              .querySelector(`[data-wallet="${wallet}"]`)
+              .classList.add("selected");
+            selectedWallet = wallet;
 
-        updatePayButton();
-      }
-      */
+            updatePayButton();
+          }
+          */
 
       // Mapea los nombres visibles del UI a lo que espera tu backend
       function mapPlanToApi(planUi) {
@@ -927,17 +878,17 @@
       }
 
       /*
-      // Obtener nombre de billetera
-      function getWalletName(wallet) {
-        const names = {
-          mercadopago: "MercadoPago",
-          uala: "Ualá",
-          brubank: "Brubank",
-          tarjeta: "Tarjeta",
-        };
-        return names[wallet] || "Método Digital";
-      }
-      */
+          // Obtener nombre de billetera
+          function getWalletName(wallet) {
+            const names = {
+              mercadopago: "MercadoPago",
+              uala: "Ualá",
+              brubank: "Brubank",
+              tarjeta: "Tarjeta",
+            };
+            return names[wallet] || "Método Digital";
+          }
+          */
 
       // Procesar pago (sin redirección automática)
       async function processPayment() {
@@ -1264,17 +1215,17 @@
       // CSS adicional para animación de entrada
       const style = document.createElement("style");
       style.textContent = `
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(30px);
+                @keyframes fadeInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(30px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
                 }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-        `;
+            `;
       document.head.appendChild(style);
     </script>
   </body>
