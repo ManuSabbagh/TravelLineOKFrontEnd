@@ -642,16 +642,40 @@
         }
       });
 
-      // Apertura EXCLUSIVAMENTE por gesto del usuario (click).
+      // Abre SIEMPRE fuera del webview (Chrome/Safari). Sin redirecciones auto.
       function openExternal(url) {
         if (!url) return;
-        const a = document.createElement("a");
-        a.href = url;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+        const ua = navigator.userAgent || "";
+        const isAndroid = /Android/i.test(ua);
+
+        if (isAndroid) {
+          // Intent a Chrome (salta del webview) + fallback al link nativo
+          const stripped = url.replace(/^https?:\/\//, "");
+          const intent = `intent://${stripped}#Intent;scheme=https;package=com.android.chrome;end`;
+          location.href = intent;
+          setTimeout(() => {
+            try {
+              window.open(url, "_blank", "noopener,noreferrer");
+            } catch (e) {}
+          }, 600);
+          return;
+        }
+
+        // iOS / otros: primer intento en misma vista (iOS suele ofrecer 'Abrir en Safari')
+        try {
+          window.location.href = url;
+        } catch (e) {}
+        // 2ª chance: link visible si el webview bloquea
+        setTimeout(() => {
+          const a = document.createElement("a");
+          a.href = url;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.textContent = "Abrir Mercado Pago";
+          a.style =
+            "display:block;margin:16px 0;text-align:center;font:16px sans-serif;";
+          document.body.appendChild(a);
+        }, 400);
       }
 
       function openExternalAndPoll(e) {
@@ -660,10 +684,30 @@
           alert("Primero tocá ‘Pagar’ para generar la orden.");
           return;
         }
-        // Abrimos MP en pestaña externa SIN redirecciones automáticas en el webview
         openExternal(window.__lastInitPoint);
-        // Arrancamos el polling en el portal actual
-        startPaidPolling();
+        startPaidPolling(); // Arrancamos el polling en el portal actual
+      }
+
+      async function startPaidPolling() {
+        const id = window.__lastOrderId;
+        if (!id) return;
+
+        const loading = document.getElementById("loading");
+        if (loading) loading.style.display = "block";
+
+        const res = await pollOrder(id, { intervalMs: 3000, maxMs: 180000 });
+        if (loading) loading.style.display = "none";
+
+        if (res?.ok) {
+          const planUi = mapPlanFromBackend(res.data.plan);
+          showResultApproved(planUi);
+        } else if (res?.timeout) {
+          alert(
+            "Aún no recibimos confirmación del pago. Volvé desde MP y actualizá esta página."
+          );
+        } else {
+          alert("El pago fue rechazado o cancelado. Probá nuevamente.");
+        }
       }
 
       // Para el botón de respaldo
