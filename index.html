@@ -575,26 +575,19 @@
       -->
       <div id="externalHint" style="display: none; margin-top: 12px">
         <div class="external-box">
-          <a id="openInlineLink"
-            href="#"
-            target="_blank"
-            rel="noopener"
-            style="display:inline-block; font-weight:700; margin-bottom:8px; text-decoration:underline;">
-            📋 Copie y pegue el siguiente enlace en su navegador para acceder a Mercado Pago y abonar
-          </a>
+          <p style="font-weight: 700; margin-bottom: 6px;">
+            📋 Copie y pegue el siguiente link en su navegador
+          </p>
 
           <div id="rawLinkBox" style="display: none; word-break: break-all; margin-top: 10px;">
-            <a id="rawLink"
-              href="#"
-              target="_blank"
-              rel="noopener"
-              style="font-size: 1.15rem; line-height: 1.4; padding: 12px;
-                      background: rgba(255,255,255,0.08); border-radius: 10px;
-                      border: 1px dashed rgba(255,255,255,0.35); display:block; user-select:text;">
-            </a>
-          </div>
-        </div>
+            <div id="rawLink"
+              style="font-size: 1.15rem; line-height: 1.4; padding: 12px; 
+                      background: rgba(255,255,255,0.08); border-radius: 10px; 
+                      border: 1px dashed rgba(255,255,255,0.35);">
       </div>
+    </div>
+  </div>
+</div>
 
       <!-- Loading -->
       <div class="loading" id="loading">
@@ -1049,24 +1042,12 @@
           const hint = document.getElementById("externalHint");
           const rawBox = document.getElementById("rawLinkBox");
           const raw = document.getElementById("rawLink");
-          const inlineA = document.getElementById("openInlineLink");
 
           if (hint) hint.style.display = "block";
-
-          // Setear destino en el texto-hipervínculo
-          if (inlineA) {
-            inlineA.href = initPoint;
-            inlineA.style.pointerEvents = "auto";
-            inlineA.setAttribute("target", "_blank");
-            inlineA.setAttribute("rel", "noopener");
-          }
-
-         // Mostrar el enlace grande, clickeable y fácil de copiar
           if (raw && rawBox) {
-            raw.textContent = initPoint;   // visible para copiar
-            raw.href = initPoint;          // y también clickeable
+            raw.textContent = initPoint;   // acá queda visible y grande
             rawBox.style.display = "block";
-          }
+        }
 
           if (loading) loading.style.display = "none";
           if (payBtn) payBtn.disabled = false;
