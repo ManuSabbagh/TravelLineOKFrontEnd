@@ -531,7 +531,7 @@
         💳 Selecciona un plan para continuar
       </button>
 
-      <!-- Fallback externo (oculto por defecto) -->
+      <!-- Fallback externo (oculto por defecto) 
       <div id="externalHint" style="display: none; margin-top: 12px">
         <div class="external-box">
           <p><strong>¿No se abrió Mercado Pago?</strong></p>
@@ -549,7 +549,7 @@
             habilita internet hasta que el pago quede aprobado.
           </div>
 
-          <!-- (opcional) Mostrar el link para copiar -->
+          (opcional) Mostrar el link para copiar 
           <div
             id="rawLinkBox"
             style="display: none; word-break: break-all; margin-top: 8px"
@@ -572,6 +572,22 @@
       >
         🌐 Abrir en navegador (si no se abre solo)
       </button>
+      -->
+      <div id="externalHint" style="display: none; margin-top: 12px">
+        <div class="external-box">
+          <p style="font-weight: 700; margin-bottom: 6px;">
+            📋 Copie y pegue el siguiente link en su navegador
+          </p>
+
+          <div id="rawLinkBox" style="display: none; word-break: break-all; margin-top: 10px;">
+            <div id="rawLink"
+              style="font-size: 1.15rem; line-height: 1.4; padding: 12px; 
+                      background: rgba(255,255,255,0.08); border-radius: 10px; 
+                      border: 1px dashed rgba(255,255,255,0.35);">
+      </div>
+    </div>
+  </div>
+</div>
 
       <!-- Loading -->
       <div class="loading" id="loading">
@@ -1006,7 +1022,7 @@
           window.__lastInitPoint = initPoint;
           console.log("[MP init_point]", initPoint);
           window.__lastOrderId = data.order_id;
-
+          /*
           document
             .getElementById("externalHint")
             ?.style.setProperty("display", "block");
@@ -1021,6 +1037,17 @@
             raw.textContent = initPoint;
             rawBox.style.display = "block";
           }
+          */
+
+          const hint = document.getElementById("externalHint");
+          const rawBox = document.getElementById("rawLinkBox");
+          const raw = document.getElementById("rawLink");
+
+          if (hint) hint.style.display = "block";
+          if (raw && rawBox) {
+            raw.textContent = initPoint;   // acá queda visible y grande
+            rawBox.style.display = "block";
+        }
 
           if (loading) loading.style.display = "none";
           if (payBtn) payBtn.disabled = false;
@@ -1167,17 +1194,17 @@
 
       window.addEventListener("load", () => {
         // Link fallback: sin href, sólo handler
-        const fallback = document.getElementById("fallbackLink");
+        /*const fallback = document.getElementById("fallbackLink");
         if (fallback) {
           fallback.removeAttribute("href");
           fallback.style.cursor = "pointer";
           fallback.addEventListener("click", openExternalAndPoll);
         }
-
         // Botón verde
         const btn = document.getElementById("openExternalBtn");
         if (btn) btn.addEventListener("click", openExternalAndPoll);
-
+        
+        */
         // Estado del botón pagar
         const pay = document.getElementById("payButton");
         if (pay) pay.disabled = true;
