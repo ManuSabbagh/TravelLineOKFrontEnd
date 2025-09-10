@@ -489,8 +489,8 @@
           <div class="payment-name">Tiempo Restante</div>
           <div class="payment-price" id="timeRemaining">--:--:--</div>
         </div>
-      </div>
         -->
+      </div>
 
       <!--
          Billeteras Digitales --
@@ -575,19 +575,65 @@
       -->
       <div id="externalHint" style="display: none; margin-top: 12px">
         <div class="external-box">
-          <p style="font-weight: 700; margin-bottom: 6px;">
-            📋 Copie y pegue el siguiente link en su navegador
+          <p style="font-weight: 700; margin-bottom: 6px">
+            📋 Copie y pegue el siguiente enlace en su navegador
           </p>
 
-          <div id="rawLinkBox" style="display: none; word-break: break-all; margin-top: 10px;">
-            <div id="rawLink"
-              style="font-size: 1.15rem; line-height: 1.4; padding: 12px; 
-                      background: rgba(255,255,255,0.08); border-radius: 10px; 
-                      border: 1px dashed rgba(255,255,255,0.35);">
+          <div
+            id="rawLinkBox"
+            style="display: none; word-break: break-all; margin-top: 10px"
+          >
+            <div
+              id="rawLink"
+              style="
+                font-size: 1.15rem;
+                line-height: 1.4;
+                padding: 12px;
+                background: rgba(255, 255, 255, 0.08);
+                border-radius: 10px;
+                border: 1px dashed rgba(255, 255, 255, 0.35);
+              "
+            ></div>
+            <!-- ✅ cierre de #rawLink -->
+          </div>
+          <!-- ✅ cierre de #rawLinkBox -->
+
+          <div
+            style="display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap"
+          >
+            <button
+              id="openExternalBtn"
+              class="pay-button"
+              style="
+                flex: 1;
+                margin-top: 0;
+                background: linear-gradient(45deg, #10ac84, #1dd1a1);
+              "
+            >
+              🌐 Abrir en navegador externo
+            </button>
+            <button
+              id="copyLinkBtn"
+              class="pay-button"
+              style="
+                flex: 1;
+                margin-top: 0;
+                background: rgba(255, 255, 255, 0.15);
+                border: 1px solid rgba(255, 255, 255, 0.35);
+              "
+            >
+              📋 Copiar enlace
+            </button>
+          </div>
+
+          <div class="mini-note" style="margin-top: 8px">
+            Si el navegador interno bloquea la salida, use “Abrir en navegador
+            externo”.
+          </div>
+        </div>
+        <!-- ✅ cierre de .external-box -->
       </div>
-    </div>
-  </div>
-</div>
+      <!-- ✅ cierre de #externalHint -->
 
       <!-- Loading -->
       <div class="loading" id="loading">
@@ -607,8 +653,11 @@
       <!-- Success Message -->
       <div class="success-message" id="successMessage">
         <h3>Su solicitud se ha generado con exito!</h3>
-        <p>Aguarde un minuto, si no se conecta automáticamente pruebe apagando y volviendo a prender su Wi-Fi</p>
-         <!--
+        <p>
+          Aguarde un minuto, si no se conecta automáticamente pruebe apagando y
+          volviendo a prender su Wi-Fi
+        </p>
+        <!--
         <div class="wifi-credentials">
           <p><strong>Red:</strong> WiFi_Central_Victoria</p>
           <p>
@@ -716,7 +765,8 @@
         if (loading) loading.style.display = "block";
 
         const res = await pollOrder(id, { intervalMs: 3000, maxMs: 180000 });
-        if (loading) loading.style.display = "none";
+
+        if (loading) loading.style.display = "none"; // ✅ volver a ocultar
 
         if (res?.ok) {
           const planUi = mapPlanFromBackend(res.data.plan);
@@ -1002,9 +1052,7 @@
 
             if (ok) {
               document.getElementById("successMessage").style.display = "block";
-              //document.getElementById("wifiPassword").textContent =
-              //  "Free1H_2024!";
-              //document.getElementById("wifiSpeed").textContent = "5 Mbps";
+              // (sin tocar spans comentados)
             } else {
               alert(
                 "Se habilitó tu acceso FREE, pero aún no detectamos conexión. Reintentá o reconectá el Wi-Fi."
@@ -1020,40 +1068,64 @@
             throw new Error("No llegó init_point desde el backend.");
 
           window.__lastInitPoint = initPoint;
-          console.log("[MP init_point]", initPoint);
           window.__lastOrderId = data.order_id;
-          /*
-          document
-            .getElementById("externalHint")
-            ?.style.setProperty("display", "block");
-          document
-            .getElementById("openExternalBtn")
-            ?.style.setProperty("display", "block");
+          console.log("[MP init_point]", initPoint);
 
-          // (opcional) mostrar el enlace crudo
-          const rawBox = document.getElementById("rawLinkBox");
-          const raw = document.getElementById("rawLink");
-          if (raw && rawBox) {
-            raw.textContent = initPoint;
-            rawBox.style.display = "block";
-          }
-          */
-
+          // Mostrar panel y link grande para copiar
           const hint = document.getElementById("externalHint");
           const rawBox = document.getElementById("rawLinkBox");
           const raw = document.getElementById("rawLink");
-
           if (hint) hint.style.display = "block";
           if (raw && rawBox) {
-            raw.textContent = initPoint;   // acá queda visible y grande
+            raw.textContent = initPoint; // visible y copiable
             rawBox.style.display = "block";
-        }
+          }
 
+          // Botón: abrir externo + empezar a evaluar el estado (poll)
+          const openBtn = document.getElementById("openExternalBtn");
+          if (openBtn) {
+            openBtn.onclick = function (e) {
+              e.preventDefault();
+              if (typeof openExternalAndPoll === "function") {
+                openExternalAndPoll(e);
+              } else {
+                openExternal(window.__lastInitPoint);
+                startPaidPolling();
+              }
+            };
+          }
+
+          // Botón: copiar enlace
+          const copyBtn = document.getElementById("copyLinkBtn");
+          if (copyBtn) {
+            copyBtn.onclick = async () => {
+              try {
+                await navigator.clipboard.writeText(initPoint);
+                copyBtn.textContent = "✅ Copiado";
+                setTimeout(
+                  () => (copyBtn.textContent = "📋 Copiar enlace"),
+                  1500
+                );
+              } catch (err) {
+                // Fallback
+                const ta = document.createElement("textarea");
+                ta.value = initPoint;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand("copy");
+                document.body.removeChild(ta);
+                copyBtn.textContent = "✅ Copiado";
+                setTimeout(
+                  () => (copyBtn.textContent = "📋 Copiar enlace"),
+                  1500
+                );
+              }
+            };
+          } // <-- ESTE era el } que faltaba
+
+          // Ya fuera del if(copyBtn)
           if (loading) loading.style.display = "none";
           if (payBtn) payBtn.disabled = false;
-
-          // Importante: acá NO hacemos location.href ni window.open.
-          // El usuario usará “Abrir en navegador” (manualExternalOpen).
         } catch (err) {
           console.error(err);
           alert("No se pudo iniciar el proceso. " + (err?.message || err));
@@ -1215,9 +1287,8 @@
       document.addEventListener("keypress", function (e) {
         if (e.key === "Enter") {
           e.preventDefault();
-          if (!document.getElementById("payButton").disabled) {
-            processPayment();
-          }
+          const pb = document.getElementById("payButton");
+          if (pb && !pb.disabled) processPayment();
         }
       });
 
@@ -1249,6 +1320,7 @@
         }
       }
 
+      /*
       // Actualizar tiempo restante cada segundo
       function updateTimeRemaining() {
         const remainingTime = localStorage.getItem("wifiTimeRemaining");
@@ -1304,6 +1376,7 @@
                 }
             `;
       document.head.appendChild(style);
+      */
     </script>
   </body>
 </html>
