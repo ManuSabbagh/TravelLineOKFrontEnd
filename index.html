@@ -587,7 +587,7 @@
         <div class="timer" id="timer">30</div>
       </div>
       -->
-      
+
       <!-- Success Message -->
       <div class="success-message" id="successMessage">
         <h3>Su solicitud se ha generado con exito!</h3>
@@ -768,6 +768,7 @@
         document.getElementById("loading").style.display = "none";
         document.getElementById("successMessage").style.display = "block";
 
+        /*
         const wifiConfigs = {
           "1hora": { password: "Free1H_2024!", speed: "5 Mbps" },
           "12horas": { password: "Wifi12H_2024!", speed: "25 Mbps" },
@@ -776,6 +777,7 @@
         const cfg = wifiConfigs[planUi] || wifiConfigs["12horas"];
         document.getElementById("wifiPassword").textContent = cfg.password;
         document.getElementById("wifiSpeed").textContent = cfg.speed;
+        */
       }
 
       function showResultRejected() {
@@ -984,9 +986,9 @@
 
             if (ok) {
               document.getElementById("successMessage").style.display = "block";
-              document.getElementById("wifiPassword").textContent =
-                "Free1H_2024!";
-              document.getElementById("wifiSpeed").textContent = "5 Mbps";
+              //document.getElementById("wifiPassword").textContent =
+              //  "Free1H_2024!";
+              //document.getElementById("wifiSpeed").textContent = "5 Mbps";
             } else {
               alert(
                 "Se habilitó tu acceso FREE, pero aún no detectamos conexión. Reintentá o reconectá el Wi-Fi."
@@ -1087,8 +1089,8 @@
         };
 
         const config = wifiConfigs[selectedPlan];
-        document.getElementById("wifiPassword").textContent = config.password;
-        document.getElementById("wifiSpeed").textContent = config.speed;
+        //document.getElementById("wifiPassword").textContent = config.password;
+        //document.getElementById("wifiSpeed").textContent = config.speed;
 
         // Guardar tiempo de conexión según el plan
         const planTimes = {
