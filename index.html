@@ -463,23 +463,23 @@
         <div
           class="payment-option"
           data-plan="12horas"
-          onclick="selectPlan('12horas', 3000)"
+          onclick="selectPlan('12horas', 5000)"
         >
           <div class="payment-icon">🕐</div>
           <div class="payment-name">12 Horas</div>
-          <div class="payment-price">$3.000</div>
+          <div class="payment-price">$5.000</div>
         </div>
 
         <div
           class="payment-option"
           data-plan="24horas"
-          onclick="selectPlan('24horas', 5000)"
+          onclick="selectPlan('24horas', 8000)"
         >
           <div class="payment-icon">🌅</div>
           <div class="payment-name">24 Horas</div>
-          <div class="payment-price">$5.000</div>
+          <div class="payment-price">$8.000</div>
         </div>
-
+        <!--
         <div
           class="payment-option"
           data-plan="tiempo"
@@ -490,6 +490,7 @@
           <div class="payment-price" id="timeRemaining">--:--:--</div>
         </div>
       </div>
+        -->
 
       <!--
          Billeteras Digitales --
@@ -519,13 +520,13 @@
             </div>
         </div> -->
 
-      <!-- Badges de Seguridad -->
+      <!-- Badges de Seguridad 
       <div class="security-badges">
         <div class="security-badge">🔒 SSL Seguro</div>
         <div class="security-badge">🛡️ 3D Secure</div>
         <div class="security-badge">⚡ Instantáneo</div>
       </div>
-
+      -->
       <button class="pay-button" onclick="processPayment()" id="payButton">
         💳 Selecciona un plan para continuar
       </button>
@@ -578,18 +579,20 @@
         <p>Procesando pago seguro...</p>
       </div>
 
-      <!-- QR Container -->
+      <!-- QR Container 
       <div class="qr-container" id="qrContainer">
         <h3>📱 Escanea el código QR</h3>
         <div class="qr-code" id="qrCode">📱</div>
         <p>Código dinámico - Se actualiza cada 30 segundos</p>
         <div class="timer" id="timer">30</div>
       </div>
-
+      -->
+      
       <!-- Success Message -->
       <div class="success-message" id="successMessage">
-        <h3>🎉 ¡Pago Exitoso!</h3>
-        <p>Tu conexión WiFi está lista</p>
+        <h3>Su solicitud se ha generado con exito!</h3>
+        <p>Aguarde un minuto, si no se conecta automáticamente pruebe apagando y volviendo a prender su Wi-Fi</p>
+         <!--
         <div class="wifi-credentials">
           <p><strong>Red:</strong> WiFi_Central_Victoria</p>
           <p>
@@ -598,6 +601,7 @@
           </p>
           <p><strong>Velocidad:</strong> <span id="wifiSpeed">50 Mbps</span></p>
         </div>
+        -->
       </div>
     </div>
 
