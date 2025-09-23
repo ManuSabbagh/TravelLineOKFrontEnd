@@ -451,13 +451,13 @@
       <!-- Opciones de Pago -->
       <div class="payment-methods">
         <div
-          class="payment-option free-plan"
+          class="payment-option premium"
           data-plan="1hora"
-          onclick="selectPlan('1hora', 0)"
+          onclick="selectPlan('1hora', 500)"
         >
-          <div class="payment-icon">🎁</div>
+          <div class="payment-icon">⏳</div>
           <div class="payment-name">1 Hora</div>
-          <div class="payment-price">GRATIS</div>
+          <div class="payment-price">$500</div>
         </div>
 
         <div
@@ -822,7 +822,7 @@
 
       // Mapear plan backend -> etiqueta UI (para mostrar credenciales/velocidad)
       function mapPlanFromBackend(plan) {
-        if (plan === "FREE_1H") return "1hora";
+        if (plan === "PAID_1H") return "1hora";
         if (plan === "PAID_12H") return "12horas";
         if (plan === "PAID_24H") return "24horas";
         return "12horas";
@@ -869,7 +869,7 @@
 
       // --- Mapeo nombres del front -> planes del backend ---
       function mapPlanToBackend(plan) {
-        if (plan === "1hora") return "FREE_1H";
+        if (plan === "1hora") return "PAID_1H";
         if (plan === "12horas") return "PAID_12H";
         if (plan === "24horas") return "PAID_24H";
         return null;
@@ -922,7 +922,7 @@
 
       // Mapea los nombres visibles del UI a lo que espera tu backend
       function mapPlanToApi(planUi) {
-        if (planUi === "1hora") return "FREE_1H";
+        if (planUi === "1hora") return "PAID_1H";
         if (planUi === "12horas") return "PAID_12H";
         if (planUi === "24horas") return "PAID_24H";
         throw new Error("Plan inválido");
@@ -946,20 +946,8 @@
           payButton.textContent = "💳 Completa tus datos";
           return;
         }
-
-        // Sin billetera: si es gratis, botón de “Gratis”; si es pago, muestra monto con MP
-        if (selectedPlan === "1hora") {
-          payButton.disabled = false;
-          payButton.textContent = "🎁 Obtener 1 Hora GRATIS";
-        }
-        if (selectedPlan === "12horas") {
-          payButton.disabled = false;
-          payButton.textContent = `💳 Pagar $${selectedPrice.toLocaleString()} con MercadoPago`;
-        }
-        if (selectedPlan === "24horas") {
-          payButton.disabled = false;
-          payButton.textContent = `💳 Pagar $${selectedPrice.toLocaleString()} con MercadoPago`;
-        }
+        payButton.disabled = false;
+        payButton.textContent = `💳 Pagar $${selectedPrice.toLocaleString()} con MercadoPago`;
       }
 
       /*
@@ -1013,23 +1001,6 @@
           }
 
           const data = await resp.json(); // { order_id, status, init_point }
-
-          // FREE: habilita y listo
-          if (planApi === "FREE_1H") {
-            const ok = await waitForInternet({ tries: 20, intervalMs: 1000 });
-            if (loading) loading.style.display = "none";
-
-            if (ok) {
-              document.getElementById("successMessage").style.display = "block";
-              // (sin tocar spans comentados)
-            } else {
-              alert(
-                "Se habilitó tu acceso FREE, pero aún no detectamos conexión. Reintentá o reconectá el Wi-Fi."
-              );
-              if (payBtn) payBtn.disabled = false;
-            }
-            return;
-          }
 
           // PAGOS: NO redirigimos. Mostramos panel con link/botón externo.
           const initPoint = data.init_point;
