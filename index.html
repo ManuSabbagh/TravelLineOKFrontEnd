@@ -415,39 +415,6 @@
         <p>Solo Mercado Pago</p>
       </div>
 
-      <!-- Formulario de Usuario -->
-      <div class="user-form" id="userForm">
-        <div class="form-group">
-          <label for="userName">👤 Nombre completo</label>
-          <input
-            type="text"
-            id="userName"
-            placeholder="Ingresa tu nombre"
-            required
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="userEmail">📧 Email</label>
-          <input
-            type="email"
-            id="userEmail"
-            placeholder="tu@email.com"
-            required
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="userPhone">📱 Teléfono</label>
-          <input
-            type="tel"
-            id="userPhone"
-            placeholder="+54 9 11 1234-5678"
-            required
-          />
-        </div>
-      </div>
-
       <!-- Opciones de Pago -->
       <div class="payment-methods">
         <div
@@ -931,9 +898,6 @@
       // Actualizar botón de pago
       function updatePayButton() {
         const payButton = document.getElementById("payButton");
-        const userName = document.getElementById("userName").value.trim();
-        const userEmail = document.getElementById("userEmail").value.trim();
-        const userPhone = document.getElementById("userPhone").value.trim();
 
         if (!selectedPlan) {
           payButton.disabled = true;
@@ -941,11 +905,7 @@
           return;
         }
 
-        if (!userName || !userEmail || !userPhone) {
-          payButton.disabled = true;
-          payButton.textContent = "💳 Completa tus datos";
-          return;
-        }
+        // ✅ Sin validar nombre/email/teléfono
         payButton.disabled = false;
         payButton.textContent = `💳 Pagar $${selectedPrice.toLocaleString()} con MercadoPago`;
       }
@@ -965,16 +925,8 @@
 
       // Procesar pago (sin redirección automática)
       async function processPayment() {
-        const userName = document.getElementById("userName").value.trim();
-        const userEmail = document.getElementById("userEmail").value.trim();
-        const userPhone = document.getElementById("userPhone").value.trim();
-
         if (!selectedPlan) {
           alert("Selecciona un plan.");
-          return;
-        }
-        if (!userName || !userEmail || !userPhone) {
-          alert("Completá nombre, email y teléfono.");
           return;
         }
 
@@ -1154,55 +1106,6 @@
           );
         }, 3000);
       }
-
-      // Event listeners para formulario
-      document
-        .getElementById("userName")
-        .addEventListener("input", updatePayButton);
-      document
-        .getElementById("userEmail")
-        .addEventListener("input", updatePayButton);
-      document
-        .getElementById("userPhone")
-        .addEventListener("input", updatePayButton);
-
-      // Formatear teléfono automáticamente
-      document
-        .getElementById("userPhone")
-        .addEventListener("input", function (e) {
-          let value = e.target.value.replace(/\D/g, "");
-          if (value.length > 0) {
-            if (value.length <= 2) {
-              value = `+${value}`;
-            } else if (value.length <= 4) {
-              value = `+${value.slice(0, 2)} ${value.slice(2)}`;
-            } else if (value.length <= 6) {
-              value = `+${value.slice(0, 2)} ${value.slice(2, 4)} ${value.slice(
-                4
-              )}`;
-            } else {
-              value = `+${value.slice(0, 2)} ${value.slice(2, 4)} ${value.slice(
-                4,
-                6
-              )} ${value.slice(6, 10)}-${value.slice(10, 14)}`;
-            }
-          }
-          e.target.value = value;
-        });
-
-      // Validar email en tiempo real
-      document
-        .getElementById("userEmail")
-        .addEventListener("blur", function (e) {
-          const email = e.target.value;
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (email && !emailRegex.test(email)) {
-            e.target.style.borderColor = "#ff4757";
-            alert("Por favor ingresa un email válido");
-          } else {
-            e.target.style.borderColor = "rgba(255, 255, 255, 0.3)";
-          }
-        });
 
       window.addEventListener("load", () => {
         // Link fallback: sin href, sólo handler
