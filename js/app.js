@@ -5,7 +5,7 @@
 
   const urlParams = new URLSearchParams(location.search);
   const MAC_FROM_URL = (urlParams.get("mac") || "AA:BB:CC:DD:EE:FF").toUpperCase();
-  const BUS_ID_FROM_URL = urlParams.get("bus_id") || "BUS-001";
+  const BUS_ID_FROM_URL = urlParams.get("bus_id") || "BUS-SIN-ID";
   const ORDER_ID_FROM_URL = urlParams.get("order_id");
   const FAILED_FLAG = urlParams.get("failed");
 
@@ -138,79 +138,94 @@
     updatePayButton();
   }
 
-  async function processPayment() {
-    const userName = document.getElementById("userName").value.trim();
-    const userEmail = document.getElementById("userEmail").value.trim();
-    const userPhone = document.getElementById("userPhone").value.trim();
-    if (!selectedPlan) { alert("Selecciona un plan."); return; }
-    if (!userName || !userEmail || !userPhone) { alert("Completá nombre, email y teléfono."); return; }
+ async function processPayment() {
+  const userName = document.getElementById("userName").value.trim();
+  const userEmail = document.getElementById("userEmail").value.trim();
+  const userPhone = document.getElementById("userPhone").value.trim();
+  if (!selectedPlan) { alert("Selecciona un plan."); return; }
+  if (!userName || !userEmail || !userPhone) { alert("Completá nombre, email y teléfono."); return; }
 
-    const planApi = mapPlanToApi(selectedPlan);
-    const loading = document.getElementById("loading");
-    const payBtn = document.getElementById("payButton");
-    if (loading) loading.style.display = "block";
-    if (payBtn) payBtn.disabled = true;
+  const planApi = mapPlanToApi(selectedPlan);
+  const loading = document.getElementById("loading");
+  const payBtn = document.getElementById("payButton");
+  if (loading) loading.style.display = "block";
+  if (payBtn) payBtn.disabled = true;
 
-    try {
-      const resp = await fetch(`${API_BASE}/orders`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planApi, mac: MAC_FROM_URL, bus_id: BUS_ID_FROM_URL }),
-      });
+  try {
+    const resp = await fetch(`${API_BASE}/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan: planApi, mac: MAC_FROM_URL, bus_id: BUS_ID_FROM_URL }),
+    });
 
-      if (resp.status === 429) {
-        const data = await resp.json().catch(() => ({}));
-        const retryAt = data?.retry_at ? `\n\nPodrás reintentar: ${data.retry_at}` : "";
-        alert("FREE no disponible aún (cooldown activo)." + retryAt);
-        throw new Error("Cooldown FREE");
-      }
-
-      if (!resp.ok) {
-        const txt = await resp.text();
-        throw new Error(`Error backend (${resp.status}): ${txt}`);
-      }
-
-      const data = await resp.json(); // { order_id, status, init_point }
-      const initPoint = data.init_point;
-      if (!initPoint) throw new Error("No llegó init_point desde el backend.");
-
-      window.__lastInitPoint = initPoint;
-      window.__lastOrderId = data.order_id;
-
-      // Mostrar panel y link grande para copiar
-      const hint = document.getElementById("externalHint");
-      const rawBox = document.getElementById("rawLinkBox");
-      const raw = document.getElementById("rawLink");
-      if (hint) hint.style.display = "block";
-      if (raw && rawBox) { raw.textContent = initPoint; rawBox.style.display = "block"; }
-
-      // Copiar enlace
-      const copyBtn = document.getElementById("copyLinkBtn");
-      if (copyBtn) {
-        copyBtn.onclick = async () => {
-          try {
-            await navigator.clipboard.writeText(initPoint);
-            copyBtn.textContent = "✅ Copiado";
-            setTimeout(() => (copyBtn.textContent = "📋 Copiar enlace"), 1500);
-          } catch {
-            const ta = document.createElement("textarea");
-            ta.value = initPoint; document.body.appendChild(ta);
-            ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
-            copyBtn.textContent = "✅ Copiado";
-            setTimeout(() => (copyBtn.textContent = "📋 Copiar enlace"), 1500);
-          }
-        };
-      }
-
-      if (loading) loading.style.display = "none";
-      if (payBtn) payBtn.disabled = false;
-    } catch (err) {
-      console.error(err);
-      alert("No se pudo iniciar el proceso. " + (err?.message || err));
-      if (loading) loading.style.display = "none";
-      if (payBtn) payBtn.disabled = false;
+    if (resp.status === 429) {
+      const data = await resp.json().catch(() => ({}));
+      const retryAt = data?.retry_at ? `\n\nPodrás reintentar: ${data.retry_at}` : "";
+      alert("FREE no disponible aún (cooldown activo)." + retryAt);
+      throw new Error("Cooldown FREE");
     }
+
+    if (!resp.ok) {
+      const txt = await resp.text();
+      throw new Error(`Error backend (${resp.status}): ${txt}`);
+    }
+
+    const data = await resp.json(); // { order_id, status, init_point }
+    const initPoint = data.init_point;
+    if (!initPoint) throw new Error("No llegó init_point desde el backend.");
+
+    // Guardar en globals para polling / apertura externa
+    window.__lastInitPoint = initPoint;
+    window.__lastOrderId = data.order_id;
+
+    // Mostrar panel y link grande para copiar
+    const hint   = document.getElementById("externalHint");
+    const rawBox = document.getElementById("rawLinkBox");
+    const raw    = document.getElementById("rawLink");
+    if (hint) hint.style.display = "block";
+    if (raw && rawBox) {
+      raw.textContent = initPoint;
+      rawBox.style.display = "block";
+    }
+
+    // Botón "Abrir Mercado Pago" -> abre init_point + empieza polling
+    const openMpBtn = document.getElementById("openMpBtn");
+    if (openMpBtn) {
+      openMpBtn.style.display = "block";
+      openMpBtn.onclick = (e) => openExternalAndPoll(e);
+    }
+
+    // Botón "Copiar enlace"
+    const copyBtn = document.getElementById("copyLinkBtn");
+    if (copyBtn) {
+      copyBtn.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(initPoint);
+          copyBtn.textContent = "✅ Copiado";
+          setTimeout(() => (copyBtn.textContent = "📋 Copiar enlace"), 1500);
+        } catch {
+          const ta = document.createElement("textarea");
+          ta.value = initPoint;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+          copyBtn.textContent = "✅ Copiado";
+          setTimeout(() => (copyBtn.textContent = "📋 Copiar enlace"), 1500);
+        }
+      };
+    }
+
+    if (loading) loading.style.display = "none";
+    if (payBtn) payBtn.disabled = false;
+  } catch (err) {
+    console.error(err);
+    alert("No se pudo iniciar el proceso. " + (err?.message || err));
+    if (loading) loading.style.display = "none";
+    if (payBtn) payBtn.disabled = false;
   }
+}
+
 
   // Eventos
   document.getElementById("userName").addEventListener("input", updatePayButton);

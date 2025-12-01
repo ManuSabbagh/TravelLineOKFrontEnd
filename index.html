@@ -200,8 +200,20 @@
             ></div>
           </div>
 
-          <!-- ÚNICO botón, con el mismo estilo que "Pagar con MercadoPago" -->
-          <button id="copyLinkBtn" class="pay-button" style="margin-top: 12px">
+          <!-- Botón principal: abrir MP en navegador/app -->
+          <button
+            id="openMpBtn"
+            class="pay-button"
+            style="
+              margin-top: 12px;
+              background: linear-gradient(45deg, #10ac84, #1dd1a1);
+            "
+          >
+            🌐 Abrir Mercado Pago
+          </button>
+
+          <!-- Botón secundario: copiar enlace -->
+          <button id="copyLinkBtn" class="pay-button" style="margin-top: 8px">
             📋 Copiar enlace
           </button>
         </div>
